@@ -3,7 +3,7 @@ all: bnfc_parser
 bnfc_parser: grammar/StarsepLang.cf
 	mkdir -p bnfc_parser && \
 	cd bnfc_parser && \
-	bnfc ../grammar/StarsepLang.cf
+	bnfc -m -haskell ../grammar/StarsepLang.cf
 
 bnfc_docs: docs/DocStarsepLang.html docs/DocStarsepLang.pdf
 
