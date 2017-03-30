@@ -7,3 +7,5 @@ starsep-lang is language created for course Programming Languages and
 Paradigms at [University of Warsaw](https://mimuw.edu.pl/en) by me, [Filip &lt;starsep&gt; Czaplicki](https://starsep.com).
 
 You can find task description (in Polish) [here](task.pdf).
+
+Latest [BNFC](https://github.com/BNFC/bnfc)-generated grammar: [HTML](DocStarsepLang.html)/[PDF](DocStarsepLang.pdf).
