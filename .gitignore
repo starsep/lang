@@ -30,3 +30,5 @@ cabal.sandbox.config
 .stack-work/
 cabal.project.local
 *.bak
+build
+bnfc_parser
