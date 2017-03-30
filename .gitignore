@@ -32,3 +32,4 @@ cabal.project.local
 *.bak
 build
 bnfc_parser
+tmp
