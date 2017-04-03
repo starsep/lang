@@ -1,9 +1,23 @@
-all: bnfc_parser
+BINARIES=interpreter TestStarsepLang
+
+all: $(BINARIES)
+
+TestStarsepLang: bnfc_parser
+	cd $< && \
+	happy -gca ParStarsepLang.y && \
+	alex -g LexStarsepLang.x && \
+	ghc --make TestStarsepLang.hs -o ../TestStarsepLang
+
+interpreter: src/Main.hs TestStarsepLang
+	ln -sf ../src/Main.hs bnfc_parser && \
+	ln -sf ../src/Interpreter.hs bnfc_parser && \
+	cd bnfc_parser && \
+	ghc --make Main.hs -o ../$@
 
 bnfc_parser: grammar/StarsepLang.cf
-	mkdir -p bnfc_parser && \
-	cd bnfc_parser && \
-	bnfc -m -haskell ../grammar/StarsepLang.cf
+	mkdir -p $@ && \
+	cd $@ && \
+	bnfc -haskell ../$<
 
 bnfc_docs: docs/DocStarsepLang.html docs/DocStarsepLang.pdf
 
@@ -20,4 +34,4 @@ docs/DocStarsepLang.pdf: bnfc_parser/DocStarsepLang.tex
 	mv tmp/DocStarsepLang.pdf $@
 
 clean:
-	rm -rf bnfc_parser build tmp
+	rm -rf bnfc_parser build tmp $(BINARIES)
