@@ -17,9 +17,9 @@ transExpr x = case x of
   Not expr -> failure x
   Neg expr -> failure x
   EString string -> failure x
-  ELitFalse -> failure x
-  ELitTrue -> failure x
-  ELitInt integer -> failure x
+  EFalse -> failure x
+  ETrue -> failure x
+  EInt integer -> failure x
 transAddOp :: AddOp -> Result
 transAddOp x = case x of
   Plus -> failure x

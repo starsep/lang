@@ -8,9 +8,9 @@ EMul.      Expr4 ::= Expr4 MulOp Expr5 ;
 Not.       Expr5 ::= "!" Expr6 ;
 Neg.       Expr5 ::= "-" Expr6 ;
 EString.   Expr6 ::= String ;
-ELitFalse. Expr6 ::= "false" ;
-ELitTrue.  Expr6 ::= "true" ;
-ELitInt.   Expr6 ::= Integer ;
+EFalse.    Expr6 ::= "false" ;
+ETrue.     Expr6 ::= "true" ;
+EInt.      Expr6 ::= Integer ;
 
 coercions  Expr 6 ;
 separator  Expr "," ;
