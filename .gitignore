@@ -21,3 +21,5 @@ cabal.project.local
 build
 bnfc_parser
 tmp
+TestStarsepLang
+interpreter
