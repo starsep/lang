@@ -3,7 +3,7 @@ module Main where
 import LexStarsepLang
 import ParStarsepLang
 import AbsStarsepLang
-import SkelStarsepLang
+import Interpreter
 
 import ErrM
 
