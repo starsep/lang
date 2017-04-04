@@ -1,3 +1,44 @@
+-- Programs ------------------------------------------------
+
+entrypoints   Program, Expr ;
+ProgramDecl.  Program ::= [TopDef] ;
+FnDef.	      TopDef ::= Type Ident "(" [Arg] ")" Block ;
+separator     nonempty TopDef "" ;
+ArgDecl. 	    Arg ::= Type Ident ;
+separator     Arg "," ;
+
+-- Statements ----------------------------------------------
+
+BlockDecl. Block ::= "{" [Stmt] "}" ;
+separator  Stmt ";" ;
+BStmt.     Stmt ::= Block ;
+Decl.      Stmt ::= Type [Item] ";" ;
+NoInit.    Item ::= Ident ;
+Init.      Item ::= Ident "=" Expr ;
+separator nonempty Item "," ;
+Ass.       Stmt ::= Ident "=" Expr  ";" ;
+Incr.      Stmt ::= Ident "++"  ";" ;
+Decr.      Stmt ::= Ident "--"  ";" ;
+Ret.       Stmt ::= "return" Expr ";" ;
+VRet.      Stmt ::= "return" ";" ;
+Cond.      Stmt ::= "if" "(" Expr ")" Block  ;
+CondElse.  Stmt ::= "if" "(" Expr ")" Block "else" Block  ;
+While.     Stmt ::= "while" "(" Expr ")" Block ;
+-- SExp.      Stmt ::= Expr  ";" ;
+
+-- Built-in functions --------------------------------------
+
+Print.     Stmt ::= "print" "(" Expr ")" ;
+
+-- Types ---------------------------------------------------
+
+Int.       Type ::= "int" ;
+Str.       Type ::= "string" ;
+Bool.      Type ::= "boolean" ;
+Void.      Type ::= "void" ;
+internal   Fun. Type ::= Type "(" [Type] ")" ;
+separator  Type "," ;
+
 -- Expressions ---------------------------------------------
 
 EOr.       Expr ::= Expr1 "||" Expr ;
@@ -15,7 +56,7 @@ EInt.      Expr6 ::= Integer ;
 coercions  Expr 6 ;
 separator  Expr "," ;
 
--- operators -----------------------------------------------
+-- Operators -----------------------------------------------
 
 Plus.      AddOp ::= "+" ;
 Minus.     AddOp ::= "-" ;
@@ -29,7 +70,7 @@ GE.        RelOp ::= ">=" ;
 EQU.       RelOp ::= "==" ;
 NE.        RelOp ::= "!=" ;
 
--- comments ------------------------------------------------
+-- Comments ------------------------------------------------
 
 comment    "#" ;
 comment    "//" ;
