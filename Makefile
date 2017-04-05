@@ -1,37 +1,39 @@
 BINARIES=interpreter TestStarsepLang
 
+.PHONY: all clean parser docs
+
 all: $(BINARIES)
 
-TestStarsepLang: bnfc_parser
+TestStarsepLang: parser
 	cd $< && \
 	happy -gca ParStarsepLang.y && \
 	alex -g LexStarsepLang.x && \
 	ghc --make TestStarsepLang.hs -o ../TestStarsepLang
 
 interpreter: src/Main.hs TestStarsepLang
-	ln -sf ../src/Main.hs bnfc_parser && \
-	ln -sf ../src/Interpreter.hs bnfc_parser && \
-	cd bnfc_parser && \
+	ln -sf ../src/Main.hs parser && \
+	ln -sf ../src/Interpreter.hs parser && \
+	cd parser && \
 	ghc --make Main.hs -o ../$@
 
-bnfc_parser: grammar/StarsepLang.cf
+parser: grammar/StarsepLang.cf
 	mkdir -p $@ && \
 	cd $@ && \
 	bnfc -haskell ../$<
 
-bnfc_docs: docs/DocStarsepLang.html docs/DocStarsepLang.pdf
+docs: docs/DocStarsepLang.html docs/DocStarsepLang.pdf
 
-bnfc_parser/DocStarsepLang.txt: bnfc_parser
+parser/DocStarsepLang.txt: parser
 
-docs/DocStarsepLang.html: bnfc_parser/DocStarsepLang.txt
+docs/DocStarsepLang.html: parser/DocStarsepLang.txt
 	txt2tags -t html -o $@ $<
 
-bnfc_parser/DocStarsepLang.tex: bnfc_parser/DocStarsepLang.txt
+parser/DocStarsepLang.tex: parser/DocStarsepLang.txt
 	txt2tags -t tex -o $@ $<
 
-docs/DocStarsepLang.pdf: bnfc_parser/DocStarsepLang.tex
+docs/DocStarsepLang.pdf: parser/DocStarsepLang.tex
 	latexmk -pdf -pdflatex="pdflatex -interaction=nonstopmode" -use-make -outdir=tmp $< && \
 	mv tmp/DocStarsepLang.pdf $@
 
 clean:
-	rm -rf bnfc_parser build tmp $(BINARIES)
+	rm -rf parser build tmp $(BINARIES)
