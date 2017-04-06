@@ -8,4 +8,6 @@ Paradigms at [University of Warsaw](https://mimuw.edu.pl/en) by me, [Filip &lt;s
 
 You can find task description (in Polish) [here](task.pdf).
 
-Latest [BNFC](https://github.com/BNFC/bnfc)-generated grammar: [HTML](DocStarsepLang.html)/[PDF](DocStarsepLang.pdf).
+# Grammar
+Latest [grammar](StarsepLang.cf) in [BNFC](https://github.com/BNFC/bnfc) format.  
+Latest [BNFC](https://github.com/BNFC/bnfc)-generated grammar documentation: [HTML](DocStarsepLang.html)/[PDF](DocStarsepLang.pdf).
