@@ -12,7 +12,7 @@ You can find task description (in Polish) [here](https://starsep.com/lang/task.p
 
 # Language Description
 starsep-lang is imperative language with functional features.
-Its grammar is based on [Latte](https://www.mimuw.edu.pl/~ben/Zajecia/Mrj2013/Latte/) with my extensions.  
+Its grammar is based on [Latte](https://www.mimuw.edu.pl/~ben/Zajecia/Mrj2016/Latte/) with my extensions.
 Find out more at [Language README](https://starsep.com/lang/LANGUAGE.html).
 
 # Grammar
