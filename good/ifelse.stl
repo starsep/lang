@@ -1,0 +1,7 @@
+void main() {
+    if 6 < 0 {
+        print("5 < 0?");
+    } else {
+        print("5 > 2");
+    }
+}
