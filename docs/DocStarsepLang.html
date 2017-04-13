@@ -82,32 +82,39 @@ The symbols used in StarsepLang are the following:
 </TR>
 <TR>
 <TD>}</TD>
-<TD></TD>
 <TD>=</TD>
-<TD>;</TD>
-</TR>
-<TR>
 <TD>++</TD>
 <TD>--</TD>
+</TR>
+<TR>
+<TD>;</TD>
 <TD>-</TD>
 <TD>!</TD>
+<TD>&amp;&amp;</TD>
 </TR>
 <TR>
-<TD COLSPAN="2">&amp;&amp; |</TD>
-<TD>| +</TD>
+<TD>||</TD>
+<TD>+</TD>
 <TD>*</TD>
+<TD>/</TD>
 </TR>
 <TR>
-<TD>/</TD>
 <TD>%</TD>
 <TD>&lt;</TD>
 <TD>&lt;=</TD>
+<TD>&gt;</TD>
 </TR>
 <TR>
-<TD>&gt;</TD>
 <TD>&gt;=</TD>
 <TD>==</TD>
 <TD>!=</TD>
+<TD>+=</TD>
+</TR>
+<TR>
+<TD>-=</TD>
+<TD>*=</TD>
+<TD>/=</TD>
+<TD>%=</TD>
 </TR>
 </TABLE>
 
@@ -185,47 +192,17 @@ All other symbols are terminals.
 <TR>
 <TD></TD>
 <TD ALIGN="center"><B>|</B></TD>
-<TD><I>Ident</I> <CODE>=</CODE> <I>Expr</I> <CODE>;</CODE></TD>
-</TR>
-<TR>
-<TD></TD>
-<TD ALIGN="center"><B>|</B></TD>
-<TD><I>Ident</I> <CODE>++</CODE> <CODE>;</CODE></TD>
-</TR>
-<TR>
-<TD></TD>
-<TD ALIGN="center"><B>|</B></TD>
-<TD><I>Ident</I> <CODE>--</CODE> <CODE>;</CODE></TD>
-</TR>
-<TR>
-<TD></TD>
-<TD ALIGN="center"><B>|</B></TD>
-<TD><CODE>return</CODE> <I>Expr</I> <CODE>;</CODE></TD>
-</TR>
-<TR>
-<TD></TD>
-<TD ALIGN="center"><B>|</B></TD>
-<TD><CODE>return</CODE> <CODE>;</CODE></TD>
-</TR>
-<TR>
-<TD></TD>
-<TD ALIGN="center"><B>|</B></TD>
 <TD><CODE>while</CODE> <I>Expr</I> <I>Block</I></TD>
 </TR>
 <TR>
 <TD></TD>
 <TD ALIGN="center"><B>|</B></TD>
-<TD><CODE>for</CODE> <I>Stmt</I> <CODE>;</CODE> <I>Expr</I> <CODE>;</CODE> <I>Stmt</I> <I>Block</I></TD>
+<TD><CODE>for</CODE> <I>Oper</I> <CODE>;</CODE> <I>Expr</I> <CODE>;</CODE> <I>Oper</I> <I>Block</I></TD>
 </TR>
 <TR>
 <TD></TD>
 <TD ALIGN="center"><B>|</B></TD>
 <TD><CODE>loop</CODE> <I>Block</I></TD>
-</TR>
-<TR>
-<TD></TD>
-<TD ALIGN="center"><B>|</B></TD>
-<TD><I>Ident</I> <CODE>(</CODE> <I>[Expr]</I> <CODE>)</CODE></TD>
 </TR>
 <TR>
 <TD></TD>
@@ -240,7 +217,7 @@ All other symbols are terminals.
 <TR>
 <TD><I>[Stmt]</I></TD>
 <TD>-&gt;</TD>
-<TD><I>Stmt</I></TD>
+<TD><B>eps</B></TD>
 </TR>
 <TR>
 <TD></TD>
@@ -250,17 +227,42 @@ All other symbols are terminals.
 <TR>
 <TD><I>Oper</I></TD>
 <TD>-&gt;</TD>
-<TD>````</TD>
-</TR>
-<TR>
-<TD></TD>
-<TD ALIGN="center"><B>|</B></TD>
 <TD><I>Type</I> <I>[Item]</I></TD>
 </TR>
 <TR>
 <TD></TD>
 <TD ALIGN="center"><B>|</B></TD>
 <TD><CODE>let</CODE> <I>Ident</I> <CODE>=</CODE> <I>Expr</I></TD>
+</TR>
+<TR>
+<TD></TD>
+<TD ALIGN="center"><B>|</B></TD>
+<TD><I>Ident</I> <I>AssOp</I> <I>Expr</I></TD>
+</TR>
+<TR>
+<TD></TD>
+<TD ALIGN="center"><B>|</B></TD>
+<TD><I>Ident</I> <CODE>++</CODE></TD>
+</TR>
+<TR>
+<TD></TD>
+<TD ALIGN="center"><B>|</B></TD>
+<TD><I>Ident</I> <CODE>--</CODE></TD>
+</TR>
+<TR>
+<TD></TD>
+<TD ALIGN="center"><B>|</B></TD>
+<TD><CODE>return</CODE> <I>Expr</I></TD>
+</TR>
+<TR>
+<TD></TD>
+<TD ALIGN="center"><B>|</B></TD>
+<TD><CODE>return</CODE></TD>
+</TR>
+<TR>
+<TD></TD>
+<TD ALIGN="center"><B>|</B></TD>
+<TD><I>Ident</I> <CODE>(</CODE> <I>[Expr]</I> <CODE>)</CODE></TD>
 </TR>
 <TR>
 <TD><I>Item</I></TD>
@@ -281,6 +283,16 @@ All other symbols are terminals.
 <TD></TD>
 <TD ALIGN="center"><B>|</B></TD>
 <TD><I>Item</I> <CODE>,</CODE> <I>[Item]</I></TD>
+</TR>
+<TR>
+<TD><I>[Oper]</I></TD>
+<TD>-&gt;</TD>
+<TD><B>eps</B></TD>
+</TR>
+<TR>
+<TD></TD>
+<TD ALIGN="center"><B>|</B></TD>
+<TD><I>Oper</I> <CODE>;</CODE> <I>[Oper]</I></TD>
 </TR>
 <TR>
 <TD><I>IfStmt</I></TD>
@@ -338,6 +350,16 @@ All other symbols are terminals.
 <TD><I>Type</I> <CODE>,</CODE> <I>[Type]</I></TD>
 </TR>
 <TR>
+<TD><I>Expr7</I></TD>
+<TD>-&gt;</TD>
+<TD><I>Ident</I> <CODE>(</CODE> <I>[Expr]</I> <CODE>)</CODE></TD>
+</TR>
+<TR>
+<TD></TD>
+<TD ALIGN="center"><B>|</B></TD>
+<TD><CODE>(</CODE> <I>Expr</I> <CODE>)</CODE></TD>
+</TR>
+<TR>
 <TD><I>Expr6</I></TD>
 <TD>-&gt;</TD>
 <TD><I>Integer</I></TD>
@@ -360,7 +382,7 @@ All other symbols are terminals.
 <TR>
 <TD></TD>
 <TD ALIGN="center"><B>|</B></TD>
-<TD><CODE>(</CODE> <I>Expr</I> <CODE>)</CODE></TD>
+<TD><I>Expr7</I></TD>
 </TR>
 <TR>
 <TD><I>Expr5</I></TD>
@@ -496,6 +518,36 @@ All other symbols are terminals.
 <TD></TD>
 <TD ALIGN="center"><B>|</B></TD>
 <TD><CODE>!=</CODE></TD>
+</TR>
+<TR>
+<TD><I>AssOp</I></TD>
+<TD>-&gt;</TD>
+<TD><CODE>=</CODE></TD>
+</TR>
+<TR>
+<TD></TD>
+<TD ALIGN="center"><B>|</B></TD>
+<TD><CODE>+=</CODE></TD>
+</TR>
+<TR>
+<TD></TD>
+<TD ALIGN="center"><B>|</B></TD>
+<TD><CODE>-=</CODE></TD>
+</TR>
+<TR>
+<TD></TD>
+<TD ALIGN="center"><B>|</B></TD>
+<TD><CODE>*=</CODE></TD>
+</TR>
+<TR>
+<TD></TD>
+<TD ALIGN="center"><B>|</B></TD>
+<TD><CODE>/=</CODE></TD>
+</TR>
+<TR>
+<TD></TD>
+<TD ALIGN="center"><B>|</B></TD>
+<TD><CODE>%=</CODE></TD>
 </TR>
 </TABLE>
 

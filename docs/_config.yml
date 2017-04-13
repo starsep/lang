@@ -1,5 +1,6 @@
 theme: jekyll-theme-slate
 title: starsep-lang
+domain: https://starsep.com/lang/
 exclude:
     - Gemfile
     - Gemfile.lock
