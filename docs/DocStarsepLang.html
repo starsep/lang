@@ -53,16 +53,17 @@ The reserved words used in StarsepLang are the following:
 <TR>
 <TD><CODE>for</CODE></TD>
 <TD><CODE>if</CODE></TD>
+<TD><CODE>in</CODE></TD>
 <TD><CODE>int</CODE></TD>
-<TD><CODE>let</CODE></TD>
 </TR>
 <TR>
+<TD><CODE>let</CODE></TD>
 <TD><CODE>loop</CODE></TD>
 <TD><CODE>return</CODE></TD>
 <TD><CODE>string</CODE></TD>
-<TD><CODE>true</CODE></TD>
 </TR>
 <TR>
+<TD><CODE>true</CODE></TD>
 <TD><CODE>typeof</CODE></TD>
 <TD><CODE>void</CODE></TD>
 <TD><CODE>while</CODE></TD>
@@ -198,6 +199,11 @@ All other symbols are terminals.
 <TD></TD>
 <TD ALIGN="center"><B>|</B></TD>
 <TD><CODE>for</CODE> <I>Oper</I> <CODE>;</CODE> <I>Expr</I> <CODE>;</CODE> <I>Oper</I> <I>Block</I></TD>
+</TR>
+<TR>
+<TD></TD>
+<TD ALIGN="center"><B>|</B></TD>
+<TD><CODE>for</CODE> <I>Ident</I> <CODE>in</CODE> <I>Expr</I> <I>Block</I></TD>
 </TR>
 <TR>
 <TD></TD>
@@ -362,6 +368,11 @@ All other symbols are terminals.
 <TR>
 <TD><I>Expr6</I></TD>
 <TD>-&gt;</TD>
+<TD><I>Ident</I></TD>
+</TR>
+<TR>
+<TD></TD>
+<TD ALIGN="center"><B>|</B></TD>
 <TD><I>Integer</I></TD>
 </TR>
 <TR>

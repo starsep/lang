@@ -6,7 +6,8 @@ SHELL=/usr/bin/env bash
 all: $(BINARIES)
 
 test: TestStarsepLang good
-	for e in good/* ; do \
+	@for e in good/* ; do \
+		echo -e "\e[93m$1----------- TESTING\e[96m $$e \e[93m$1--------------\e[0m"; \
 		./TestStarsepLang < "$$e" ; \
 	done
 
@@ -14,13 +15,19 @@ TestStarsepLang: parser
 	cd $< && \
 	happy -gca ParStarsepLang.y && \
 	alex -g LexStarsepLang.x && \
-	ghc --make TestStarsepLang.hs -o ../TestStarsepLang
+	ghc --make TestStarsepLang.hs -o ../$@
 
-interpreter: src/Main.hs TestStarsepLang
+interpreter: TestStarsepLang src/Main.hs src/Interpreter.hs
 	ln -sf ../src/Main.hs parser && \
 	ln -sf ../src/Interpreter.hs parser && \
 	cd parser && \
 	ghc --make Main.hs -o ../$@
+
+parser/SkelStarsepLang.hs: parser
+
+src/Interpreter.hs: parser/SkelStarsepLang.hs
+	echo "module Interpreter where" > $@
+	tail -n+4 $< >> $@
 
 parser: grammar/StarsepLang.cf
 	mkdir -p $@ && \

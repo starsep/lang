@@ -23,12 +23,13 @@ Incr.      Oper ::= Ident "++" ;
 Decr.      Oper ::= Ident "--" ;
 Ret.       Oper ::= "return" Expr ;
 VRet.      Oper ::= "return" ;
-FunExec.   Oper ::= Ident "(" [Expr] ")" ;
+FnExec.    Oper ::= Ident "(" [Expr] ")" ;
 terminator Oper ";" ;
 
 OperStmt.  Stmt ::= Oper ";" ;
 While.     Stmt ::= "while" Expr Block ;
 For.       Stmt ::= "for" Oper ";" Expr ";" Oper Block ;
+Foreach.   Stmt ::= "for" Ident "in" Expr Block ;
 Loop.      Stmt ::= "loop" Block ;
 
 CondElif.  IfStmt ::= IfStmt "elif" Expr Block;
@@ -50,13 +51,14 @@ separator  Type "," ;
 
 -- Expressions ---------------------------------------------
 
-FunExpr.   Expr7 ::= Ident "(" [Expr] ")" ;
+EFun.   Expr7 ::= Ident "(" [Expr] ")" ;
+EVar.      Expr6 ::= Ident ;
 EInt.      Expr6 ::= Integer ;
 EString.   Expr6 ::= String ;
 EFalse.    Expr6 ::= "false" ;
 ETrue.     Expr6 ::= "true" ;
-Neg.       Expr5 ::= "-" Expr6 ;
-Not.       Expr5 ::= "!" Expr6 ;
+ENeg.       Expr5 ::= "-" Expr6 ;
+ENot.       Expr5 ::= "!" Expr6 ;
 EMul.      Expr4 ::= Expr4 MulOp Expr5 ;
 EAdd.      Expr3 ::= Expr3 AddOp Expr4 ;
 ERel.      Expr2 ::= Expr2 RelOp Expr3 ;
