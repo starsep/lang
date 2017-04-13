@@ -1,0 +1,5 @@
+void main() {
+    let x = 40, y = 42;
+    let max = x > y ? x : y;
+    print(max);
+}

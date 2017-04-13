@@ -1,0 +1,14 @@
+void foo1() {}
+
+void foo2(int x) {}
+
+int foo3() { return 42; }
+
+int foo4(int x, int y) { return x + y; }
+
+void main() {
+    Fn<void> bar1 = foo1;
+    Fn<int -> void> bar2 = foo2;
+    Fn<int> bar3 = foo3;
+    Fn<int, int -> int> bar4 = foo4;
+}

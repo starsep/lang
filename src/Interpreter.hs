@@ -35,7 +35,7 @@ transStmt x = case x of
 transOper :: Oper -> Result
 transOper x = case x of
   Decl type_ items -> failure x
-  Let ident expr -> failure x
+  Let items -> failure x
   Ass ident assop expr -> failure x
   Incr ident -> failure x
   Decr ident -> failure x
@@ -58,14 +58,17 @@ transType x = case x of
   Int -> failure x
   Str -> failure x
   Bool -> failure x
+  Float -> failure x
   Void -> failure x
   TypeOf expr -> failure x
-  Fun type_ types -> failure x
+  FnType type_ -> failure x
+  FnArgType types type_ -> failure x
 transExpr :: Expr -> Result
 transExpr x = case x of
   EFun ident exprs -> failure x
   EVar ident -> failure x
   EInt integer -> failure x
+  EFloat double -> failure x
   EString string -> failure x
   EFalse -> failure x
   ETrue -> failure x
@@ -76,6 +79,8 @@ transExpr x = case x of
   ERel expr1 relop expr2 -> failure x
   EAnd expr1 expr2 -> failure x
   EOr expr1 expr2 -> failure x
+  ETernary expr1 expr2 expr3 -> failure x
+  Lambda idents expr -> failure x
 transAddOp :: AddOp -> Result
 transAddOp x = case x of
   Plus -> failure x
