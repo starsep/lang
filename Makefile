@@ -1,8 +1,14 @@
 BINARIES=interpreter TestStarsepLang
+SHELL=/usr/bin/env bash
 
-.PHONY: all clean parser docs
+.PHONY: all clean parser docs test
 
 all: $(BINARIES)
+
+test: TestStarsepLang good
+	for e in good/* ; do \
+		./TestStarsepLang < "$$e" ; \
+	done
 
 TestStarsepLang: parser
 	cd $< && \
