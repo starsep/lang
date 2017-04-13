@@ -55,9 +55,9 @@ empty string for string, 0.0 for float, null char for char
 # Control flow
 - if
 ``` python
- if boolExpr1 {
+ if BoolExpr1 {
     // instructions1
-  } elif boolExpr2 {
+  } elif BoolExpr2 {
     // instructions2
   } else {
     // instructions3
@@ -65,14 +65,14 @@ empty string for string, 0.0 for float, null char for char
 ```
 - while
 ``` rust
- while boolExpr {
+ while BoolExpr {
     // instructions
   }
 ```
 - loop is equivalent of `while true`
-- for
+- for c++-like
 ``` rust
- for {
+ for Oper1; BoolExpr; Oper2 {
     // instructions
   }
 ```
