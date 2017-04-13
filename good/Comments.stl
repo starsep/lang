@@ -1,0 +1,11 @@
+// In starsep-lang are available single line comments
+# starting either with // or #
+
+void main() {
+    /*
+        There are also multiline comments.
+        Multiline comments cannot me nested.
+    */
+    // Nesting multiline comment inside single line comment /* is not an issue */
+    print("Comments FTW!");
+}

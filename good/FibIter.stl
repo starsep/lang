@@ -1,0 +1,14 @@
+int fib(int n) {
+    int x = 0, y = 1;
+    for i in range(0, n) {
+        int sum = x + y;
+        x = y;
+        y = sum;
+    }
+    return y;
+}
+
+void main() {
+    let n = 9;
+    print(fib(n));
+}

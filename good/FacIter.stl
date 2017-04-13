@@ -1,0 +1,12 @@
+int factorial(int n) {
+    int result = 1;
+    for i in range(0, n) {
+        result *= i;
+    }
+    return result;
+}
+
+void main() {
+    let n = 10;
+    print(factorial(n));
+}
