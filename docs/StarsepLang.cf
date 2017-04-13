@@ -11,26 +11,25 @@ separator     Arg "," ;
 
 BlockDecl. Block ::= "{" [Stmt] "}" ;
 BStmt.     Stmt ::= Block ;
-separator nonempty Stmt "" ;
+separator  Stmt "" ;
 
-Empty.     Oper ::= "" ;
 Decl.      Oper ::= Type [Item] ;
 NoInit.    Item ::= Ident ;
 Init.      Item ::= Ident "=" Expr ;
 separator nonempty Item "," ;
 Let.       Oper ::= "let" Ident "=" Expr ;
+Ass.       Oper ::= Ident AssOp Expr ;
+Incr.      Oper ::= Ident "++" ;
+Decr.      Oper ::= Ident "--" ;
+Ret.       Oper ::= "return" Expr ;
+VRet.      Oper ::= "return" ;
+FunExec.   Oper ::= Ident "(" [Expr] ")" ;
+terminator Oper ";" ;
 
 OperStmt.  Stmt ::= Oper ";" ;
-
-Ass.       Stmt ::= Ident "=" Expr  ";" ;
-Incr.      Stmt ::= Ident "++"  ";" ;
-Decr.      Stmt ::= Ident "--"  ";" ;
-Ret.       Stmt ::= "return" Expr ";" ;
-VRet.      Stmt ::= "return" ";" ;
 While.     Stmt ::= "while" Expr Block ;
-For.       Stmt ::= "for" Stmt ";" Expr ";" Stmt Block ;
+For.       Stmt ::= "for" Oper ";" Expr ";" Oper Block ;
 Loop.      Stmt ::= "loop" Block ;
-FunExec.   Stmt ::= Ident "(" [Expr] ")" ;
 
 CondElif.  IfStmt ::= IfStmt "elif" Expr Block;
 CondElse.  IfElseStmt ::= IfStmt "else" Block ;
@@ -51,6 +50,7 @@ separator  Type "," ;
 
 -- Expressions ---------------------------------------------
 
+FunExpr.   Expr7 ::= Ident "(" [Expr] ")" ;
 EInt.      Expr6 ::= Integer ;
 EString.   Expr6 ::= String ;
 EFalse.    Expr6 ::= "false" ;
@@ -63,7 +63,7 @@ ERel.      Expr2 ::= Expr2 RelOp Expr3 ;
 EAnd.      Expr1 ::= Expr2 "&&" Expr1 ;
 EOr.       Expr  ::= Expr1 "||" Expr ;
 
-coercions  Expr 6 ;
+coercions  Expr 7 ;
 separator  Expr "," ;
 
 -- Operators -----------------------------------------------
@@ -79,6 +79,12 @@ GTH.       RelOp ::= ">" ;
 GE.        RelOp ::= ">=" ;
 EQU.       RelOp ::= "==" ;
 NE.        RelOp ::= "!=" ;
+Assign.    AssOp ::= "=" ;
+PlusAss.   AssOp ::= "+=" ;
+MinusAss.  AssOp ::= "-=" ;
+MulAss.    AssOp ::= "*=" ;
+DivAss.    AssOp ::= "/=" ;
+ModAss.    AssOp ::= "%=" ;
 
 -- Comments ------------------------------------------------
 

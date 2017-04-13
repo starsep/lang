@@ -25,19 +25,22 @@ module Interpreter where
   transStmt :: Stmt -> Result
   transStmt x = case x of
     BStmt block -> failure x
+    OperStmt oper -> failure x
+    While expr block -> failure x
+    For oper1 expr oper2 block -> failure x
+    Loop block -> failure x
+    CondIf ifstmt -> failure x
+    ElseStmt ifelsestmt -> failure x
+  transOper :: Oper -> Result
+  transOper x = case x of
     Decl type_ items -> failure x
     Let ident expr -> failure x
-    Ass ident expr -> failure x
+    Ass ident assop expr -> failure x
     Incr ident -> failure x
     Decr ident -> failure x
     Ret expr -> failure x
     VRet -> failure x
-    While expr block -> failure x
-    For stmt1 expr stmt2 block -> failure x
-    Loop block -> failure x
     FunExec ident exprs -> failure x
-    CondIf ifstmt -> failure x
-    ElseStmt ifelsestmt -> failure x
   transItem :: Item -> Result
   transItem x = case x of
     NoInit ident -> failure x
@@ -59,6 +62,7 @@ module Interpreter where
     Fun type_ types -> failure x
   transExpr :: Expr -> Result
   transExpr x = case x of
+    FunExpr ident exprs -> failure x
     EInt integer -> failure x
     EString string -> failure x
     EFalse -> failure x
@@ -87,3 +91,11 @@ module Interpreter where
     GE -> failure x
     EQU -> failure x
     NE -> failure x
+  transAssOp :: AssOp -> Result
+  transAssOp x = case x of
+    Assign -> failure x
+    PlusAss -> failure x
+    MinusAss -> failure x
+    MulAss -> failure x
+    DivAss -> failure x
+    ModAss -> failure x
