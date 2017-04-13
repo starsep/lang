@@ -43,7 +43,7 @@ empty string for string, 0.0 for float, null char for char
 # Operators
 - arithmetic: + - * / %
 - parenthesis ( )
-- logical: ! && ||
+- logical: ! &amp;&amp; ||
 - comparison: < > <= >= == !=
 - assignment: = += -= *= /= %=
 - ternary operator (like in C) `boolExpr ? expr1 : expr2`

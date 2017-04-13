@@ -6,6 +6,8 @@ layout: default
 starsep-lang is language created for course Programming Languages and
 Paradigms at [University of Warsaw](https://mimuw.edu.pl/en) by me, [Filip &lt;starsep&gt; Czaplicki](https://starsep.com).
 
+Language site is at https://starsep.com/lang.
+
 You can find task description (in Polish) [here]({{ site.domain }}task.pdf).
 
 # Language Description
