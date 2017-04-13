@@ -1,57 +1,67 @@
 -- Programs ------------------------------------------------
 
-entrypoints   Program, Expr ;
+entrypoints   Program ;
 ProgramDecl.  Program ::= [TopDef] ;
 FnDef.	      TopDef ::= Type Ident "(" [Arg] ")" Block ;
 separator     nonempty TopDef "" ;
-ArgDecl. 	    Arg ::= Type Ident ;
+ArgDecl.      Arg ::= Type Ident ;
 separator     Arg "," ;
 
 -- Statements ----------------------------------------------
 
 BlockDecl. Block ::= "{" [Stmt] "}" ;
-separator  Stmt ";" ;
 BStmt.     Stmt ::= Block ;
-Decl.      Stmt ::= Type [Item] ";" ;
+separator nonempty Stmt "" ;
+
+Empty.     Oper ::= "" ;
+Decl.      Oper ::= Type [Item] ;
 NoInit.    Item ::= Ident ;
 Init.      Item ::= Ident "=" Expr ;
 separator nonempty Item "," ;
+Let.       Oper ::= "let" Ident "=" Expr ;
+
+OperStmt.  Stmt ::= Oper ";" ;
+
 Ass.       Stmt ::= Ident "=" Expr  ";" ;
 Incr.      Stmt ::= Ident "++"  ";" ;
 Decr.      Stmt ::= Ident "--"  ";" ;
 Ret.       Stmt ::= "return" Expr ";" ;
 VRet.      Stmt ::= "return" ";" ;
-Cond.      Stmt ::= "if" "(" Expr ")" Block  ;
-CondElse.  Stmt ::= "if" "(" Expr ")" Block "else" Block  ;
-While.     Stmt ::= "while" "(" Expr ")" Block ;
--- SExp.      Stmt ::= Expr  ";" ;
+While.     Stmt ::= "while" Expr Block ;
+For.       Stmt ::= "for" Stmt ";" Expr ";" Stmt Block ;
+Loop.      Stmt ::= "loop" Block ;
+FunExec.   Stmt ::= Ident "(" [Expr] ")" ;
 
--- Built-in functions --------------------------------------
+CondElif.  IfStmt ::= IfStmt "elif" Expr Block;
+CondElse.  IfElseStmt ::= IfStmt "else" Block ;
+Cond.      IfStmt ::= "if" Expr Block ;
 
-Print.     Stmt ::= "print" "(" Expr ")" ;
+CondIf.    Stmt   ::= IfStmt ;
+ElseStmt.  Stmt   ::= IfElseStmt ;
 
 -- Types ---------------------------------------------------
 
 Int.       Type ::= "int" ;
 Str.       Type ::= "string" ;
-Bool.      Type ::= "boolean" ;
+Bool.      Type ::= "bool" ;
 Void.      Type ::= "void" ;
+TypeOf.    Type ::= "typeof" "(" Expr ")" ;
 internal   Fun. Type ::= Type "(" [Type] ")" ;
 separator  Type "," ;
 
 -- Expressions ---------------------------------------------
 
-EOr.       Expr ::= Expr1 "||" Expr ;
-EAnd.      Expr1 ::= Expr2 "&&" Expr1 ;
-ERel.      Expr2 ::= Expr2 RelOp Expr3 ;
-EAdd.      Expr3 ::= Expr3 AddOp Expr4 ;
-EMul.      Expr4 ::= Expr4 MulOp Expr5 ;
-Not.       Expr5 ::= "!" Expr6 ;
-Neg.       Expr5 ::= "-" Expr6 ;
+EInt.      Expr6 ::= Integer ;
 EString.   Expr6 ::= String ;
 EFalse.    Expr6 ::= "false" ;
 ETrue.     Expr6 ::= "true" ;
-EInt.      Expr6 ::= Integer ;
+Neg.       Expr5 ::= "-" Expr6 ;
+Not.       Expr5 ::= "!" Expr6 ;
+EMul.      Expr4 ::= Expr4 MulOp Expr5 ;
+EAdd.      Expr3 ::= Expr3 AddOp Expr4 ;
+ERel.      Expr2 ::= Expr2 RelOp Expr3 ;
+EAnd.      Expr1 ::= Expr2 "&&" Expr1 ;
+EOr.       Expr  ::= Expr1 "||" Expr ;
 
 coercions  Expr 6 ;
 separator  Expr "," ;

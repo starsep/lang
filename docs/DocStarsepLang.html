@@ -26,12 +26,12 @@ reserved words excluded.
 <H3>Literals</H3>
 
 <P>
+Integer literals <I>Integer</I> are nonempty sequences of digits.
+</P>
+<P>
 String literals <I>String</I> have the form
 <CODE>"</CODE><I>x</I><CODE>"</CODE>}, where <I>x</I> is any sequence of any characters
 except <CODE>"</CODE> unless preceded by <CODE>\</CODE>.
-</P>
-<P>
-Integer literals <I>Integer</I> are nonempty sequences of digits.
 </P>
 
 <H3>Reserved words and symbols</H3>
@@ -45,19 +45,25 @@ The reserved words used in StarsepLang are the following:
 
 <TABLE ALIGN="center" CELLPADDING="4">
 <TR>
-<TD><CODE>boolean</CODE></TD>
+<TD><CODE>bool</CODE></TD>
+<TD><CODE>elif</CODE></TD>
 <TD><CODE>else</CODE></TD>
 <TD><CODE>false</CODE></TD>
-<TD><CODE>if</CODE></TD>
 </TR>
 <TR>
+<TD><CODE>for</CODE></TD>
+<TD><CODE>if</CODE></TD>
 <TD><CODE>int</CODE></TD>
-<TD><CODE>print</CODE></TD>
+<TD><CODE>let</CODE></TD>
+</TR>
+<TR>
+<TD><CODE>loop</CODE></TD>
 <TD><CODE>return</CODE></TD>
 <TD><CODE>string</CODE></TD>
+<TD><CODE>true</CODE></TD>
 </TR>
 <TR>
-<TD><CODE>true</CODE></TD>
+<TD><CODE>typeof</CODE></TD>
 <TD><CODE>void</CODE></TD>
 <TD><CODE>while</CODE></TD>
 </TR>
@@ -76,28 +82,29 @@ The symbols used in StarsepLang are the following:
 </TR>
 <TR>
 <TD>}</TD>
-<TD>;</TD>
+<TD></TD>
 <TD>=</TD>
-<TD>++</TD>
+<TD>;</TD>
 </TR>
 <TR>
-<TD COLSPAN="2">-- |</TD>
-<TD>| &amp;&amp;</TD>
+<TD>++</TD>
+<TD>--</TD>
+<TD>-</TD>
 <TD>!</TD>
 </TR>
 <TR>
-<TD>-</TD>
-<TD>+</TD>
+<TD COLSPAN="2">&amp;&amp; |</TD>
+<TD>| +</TD>
 <TD>*</TD>
-<TD>/</TD>
 </TR>
 <TR>
+<TD>/</TD>
 <TD>%</TD>
 <TD>&lt;</TD>
 <TD>&lt;=</TD>
-<TD>&gt;</TD>
 </TR>
 <TR>
+<TD>&gt;</TD>
 <TD>&gt;=</TD>
 <TD>==</TD>
 <TD>!=</TD>
@@ -166,21 +173,6 @@ All other symbols are terminals.
 <TD><CODE>{</CODE> <I>[Stmt]</I> <CODE>}</CODE></TD>
 </TR>
 <TR>
-<TD><I>[Stmt]</I></TD>
-<TD>-&gt;</TD>
-<TD><B>eps</B></TD>
-</TR>
-<TR>
-<TD></TD>
-<TD ALIGN="center"><B>|</B></TD>
-<TD><I>Stmt</I></TD>
-</TR>
-<TR>
-<TD></TD>
-<TD ALIGN="center"><B>|</B></TD>
-<TD><I>Stmt</I> <CODE>;</CODE> <I>[Stmt]</I></TD>
-</TR>
-<TR>
 <TD><I>Stmt</I></TD>
 <TD>-&gt;</TD>
 <TD><I>Block</I></TD>
@@ -188,7 +180,7 @@ All other symbols are terminals.
 <TR>
 <TD></TD>
 <TD ALIGN="center"><B>|</B></TD>
-<TD><I>Type</I> <I>[Item]</I> <CODE>;</CODE></TD>
+<TD><I>Oper</I> <CODE>;</CODE></TD>
 </TR>
 <TR>
 <TD></TD>
@@ -218,22 +210,57 @@ All other symbols are terminals.
 <TR>
 <TD></TD>
 <TD ALIGN="center"><B>|</B></TD>
-<TD><CODE>if</CODE> <CODE>(</CODE> <I>Expr</I> <CODE>)</CODE> <I>Block</I></TD>
+<TD><CODE>while</CODE> <I>Expr</I> <I>Block</I></TD>
 </TR>
 <TR>
 <TD></TD>
 <TD ALIGN="center"><B>|</B></TD>
-<TD><CODE>if</CODE> <CODE>(</CODE> <I>Expr</I> <CODE>)</CODE> <I>Block</I> <CODE>else</CODE> <I>Block</I></TD>
+<TD><CODE>for</CODE> <I>Stmt</I> <CODE>;</CODE> <I>Expr</I> <CODE>;</CODE> <I>Stmt</I> <I>Block</I></TD>
 </TR>
 <TR>
 <TD></TD>
 <TD ALIGN="center"><B>|</B></TD>
-<TD><CODE>while</CODE> <CODE>(</CODE> <I>Expr</I> <CODE>)</CODE> <I>Block</I></TD>
+<TD><CODE>loop</CODE> <I>Block</I></TD>
 </TR>
 <TR>
 <TD></TD>
 <TD ALIGN="center"><B>|</B></TD>
-<TD><CODE>print</CODE> <CODE>(</CODE> <I>Expr</I> <CODE>)</CODE></TD>
+<TD><I>Ident</I> <CODE>(</CODE> <I>[Expr]</I> <CODE>)</CODE></TD>
+</TR>
+<TR>
+<TD></TD>
+<TD ALIGN="center"><B>|</B></TD>
+<TD><I>IfStmt</I></TD>
+</TR>
+<TR>
+<TD></TD>
+<TD ALIGN="center"><B>|</B></TD>
+<TD><I>IfElseStmt</I></TD>
+</TR>
+<TR>
+<TD><I>[Stmt]</I></TD>
+<TD>-&gt;</TD>
+<TD><I>Stmt</I></TD>
+</TR>
+<TR>
+<TD></TD>
+<TD ALIGN="center"><B>|</B></TD>
+<TD><I>Stmt</I> <I>[Stmt]</I></TD>
+</TR>
+<TR>
+<TD><I>Oper</I></TD>
+<TD>-&gt;</TD>
+<TD>````</TD>
+</TR>
+<TR>
+<TD></TD>
+<TD ALIGN="center"><B>|</B></TD>
+<TD><I>Type</I> <I>[Item]</I></TD>
+</TR>
+<TR>
+<TD></TD>
+<TD ALIGN="center"><B>|</B></TD>
+<TD><CODE>let</CODE> <I>Ident</I> <CODE>=</CODE> <I>Expr</I></TD>
 </TR>
 <TR>
 <TD><I>Item</I></TD>
@@ -256,6 +283,21 @@ All other symbols are terminals.
 <TD><I>Item</I> <CODE>,</CODE> <I>[Item]</I></TD>
 </TR>
 <TR>
+<TD><I>IfStmt</I></TD>
+<TD>-&gt;</TD>
+<TD><I>IfStmt</I> <CODE>elif</CODE> <I>Expr</I> <I>Block</I></TD>
+</TR>
+<TR>
+<TD></TD>
+<TD ALIGN="center"><B>|</B></TD>
+<TD><CODE>if</CODE> <I>Expr</I> <I>Block</I></TD>
+</TR>
+<TR>
+<TD><I>IfElseStmt</I></TD>
+<TD>-&gt;</TD>
+<TD><I>IfStmt</I> <CODE>else</CODE> <I>Block</I></TD>
+</TR>
+<TR>
 <TD><I>Type</I></TD>
 <TD>-&gt;</TD>
 <TD><CODE>int</CODE></TD>
@@ -268,12 +310,17 @@ All other symbols are terminals.
 <TR>
 <TD></TD>
 <TD ALIGN="center"><B>|</B></TD>
-<TD><CODE>boolean</CODE></TD>
+<TD><CODE>bool</CODE></TD>
 </TR>
 <TR>
 <TD></TD>
 <TD ALIGN="center"><B>|</B></TD>
 <TD><CODE>void</CODE></TD>
+</TR>
+<TR>
+<TD></TD>
+<TD ALIGN="center"><B>|</B></TD>
+<TD><CODE>typeof</CODE> <CODE>(</CODE> <I>Expr</I> <CODE>)</CODE></TD>
 </TR>
 <TR>
 <TD><I>[Type]</I></TD>
@@ -291,73 +338,13 @@ All other symbols are terminals.
 <TD><I>Type</I> <CODE>,</CODE> <I>[Type]</I></TD>
 </TR>
 <TR>
-<TD><I>Expr</I></TD>
-<TD>-&gt;</TD>
-<TD><I>Expr1</I> <CODE>||</CODE> <I>Expr</I></TD>
-</TR>
-<TR>
-<TD></TD>
-<TD ALIGN="center"><B>|</B></TD>
-<TD><I>Expr1</I></TD>
-</TR>
-<TR>
-<TD><I>Expr1</I></TD>
-<TD>-&gt;</TD>
-<TD><I>Expr2</I> <CODE>&amp;&amp;</CODE> <I>Expr1</I></TD>
-</TR>
-<TR>
-<TD></TD>
-<TD ALIGN="center"><B>|</B></TD>
-<TD><I>Expr2</I></TD>
-</TR>
-<TR>
-<TD><I>Expr2</I></TD>
-<TD>-&gt;</TD>
-<TD><I>Expr2</I> <I>RelOp</I> <I>Expr3</I></TD>
-</TR>
-<TR>
-<TD></TD>
-<TD ALIGN="center"><B>|</B></TD>
-<TD><I>Expr3</I></TD>
-</TR>
-<TR>
-<TD><I>Expr3</I></TD>
-<TD>-&gt;</TD>
-<TD><I>Expr3</I> <I>AddOp</I> <I>Expr4</I></TD>
-</TR>
-<TR>
-<TD></TD>
-<TD ALIGN="center"><B>|</B></TD>
-<TD><I>Expr4</I></TD>
-</TR>
-<TR>
-<TD><I>Expr4</I></TD>
-<TD>-&gt;</TD>
-<TD><I>Expr4</I> <I>MulOp</I> <I>Expr5</I></TD>
-</TR>
-<TR>
-<TD></TD>
-<TD ALIGN="center"><B>|</B></TD>
-<TD><I>Expr5</I></TD>
-</TR>
-<TR>
-<TD><I>Expr5</I></TD>
-<TD>-&gt;</TD>
-<TD><CODE>!</CODE> <I>Expr6</I></TD>
-</TR>
-<TR>
-<TD></TD>
-<TD ALIGN="center"><B>|</B></TD>
-<TD><CODE>-</CODE> <I>Expr6</I></TD>
-</TR>
-<TR>
-<TD></TD>
-<TD ALIGN="center"><B>|</B></TD>
-<TD><I>Expr6</I></TD>
-</TR>
-<TR>
 <TD><I>Expr6</I></TD>
 <TD>-&gt;</TD>
+<TD><I>Integer</I></TD>
+</TR>
+<TR>
+<TD></TD>
+<TD ALIGN="center"><B>|</B></TD>
 <TD><I>String</I></TD>
 </TR>
 <TR>
@@ -373,12 +360,72 @@ All other symbols are terminals.
 <TR>
 <TD></TD>
 <TD ALIGN="center"><B>|</B></TD>
-<TD><I>Integer</I></TD>
+<TD><CODE>(</CODE> <I>Expr</I> <CODE>)</CODE></TD>
+</TR>
+<TR>
+<TD><I>Expr5</I></TD>
+<TD>-&gt;</TD>
+<TD><CODE>-</CODE> <I>Expr6</I></TD>
 </TR>
 <TR>
 <TD></TD>
 <TD ALIGN="center"><B>|</B></TD>
-<TD><CODE>(</CODE> <I>Expr</I> <CODE>)</CODE></TD>
+<TD><CODE>!</CODE> <I>Expr6</I></TD>
+</TR>
+<TR>
+<TD></TD>
+<TD ALIGN="center"><B>|</B></TD>
+<TD><I>Expr6</I></TD>
+</TR>
+<TR>
+<TD><I>Expr4</I></TD>
+<TD>-&gt;</TD>
+<TD><I>Expr4</I> <I>MulOp</I> <I>Expr5</I></TD>
+</TR>
+<TR>
+<TD></TD>
+<TD ALIGN="center"><B>|</B></TD>
+<TD><I>Expr5</I></TD>
+</TR>
+<TR>
+<TD><I>Expr3</I></TD>
+<TD>-&gt;</TD>
+<TD><I>Expr3</I> <I>AddOp</I> <I>Expr4</I></TD>
+</TR>
+<TR>
+<TD></TD>
+<TD ALIGN="center"><B>|</B></TD>
+<TD><I>Expr4</I></TD>
+</TR>
+<TR>
+<TD><I>Expr2</I></TD>
+<TD>-&gt;</TD>
+<TD><I>Expr2</I> <I>RelOp</I> <I>Expr3</I></TD>
+</TR>
+<TR>
+<TD></TD>
+<TD ALIGN="center"><B>|</B></TD>
+<TD><I>Expr3</I></TD>
+</TR>
+<TR>
+<TD><I>Expr1</I></TD>
+<TD>-&gt;</TD>
+<TD><I>Expr2</I> <CODE>&amp;&amp;</CODE> <I>Expr1</I></TD>
+</TR>
+<TR>
+<TD></TD>
+<TD ALIGN="center"><B>|</B></TD>
+<TD><I>Expr2</I></TD>
+</TR>
+<TR>
+<TD><I>Expr</I></TD>
+<TD>-&gt;</TD>
+<TD><I>Expr1</I> <CODE>||</CODE> <I>Expr</I></TD>
+</TR>
+<TR>
+<TD></TD>
+<TD ALIGN="center"><B>|</B></TD>
+<TD><I>Expr1</I></TD>
 </TR>
 <TR>
 <TD><I>[Expr]</I></TD>
