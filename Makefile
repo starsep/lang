@@ -1,7 +1,7 @@
 BINARIES=interpreter TestStarsepLang
 SHELL=/usr/bin/env bash
 
-.PHONY: all clean parser docs test
+.PHONY: all clean build docs test linkSources
 
 all: $(BINARIES)
 
@@ -11,42 +11,43 @@ test: TestStarsepLang good
 		./TestStarsepLang < "$$e" ; \
 	done
 
-TestStarsepLang: parser
+TestStarsepLang: build
 	cd $< && \
 	happy -gca ParStarsepLang.y && \
 	alex -g LexStarsepLang.x && \
 	ghc --make TestStarsepLang.hs -o ../$@
 
-interpreter: TestStarsepLang src/Main.hs src/Interpreter.hs
-	ln -sf ../src/Main.hs parser && \
-	ln -sf ../src/Interpreter.hs parser && \
-	cd parser && \
+linkSources: src/Main.hs src/Interpreter.hs src/Environment.hs
+	ln -srf $^ build
+
+interpreter: TestStarsepLang linkSources
+	cd build && \
 	ghc --make Main.hs -o ../$@
 
-parser/SkelStarsepLang.hs: parser
+build/SkelStarsepLang.hs: build
 
-src/Interpreter.hs: parser/SkelStarsepLang.hs
-	echo "module Interpreter where" > $@
-	tail -n+4 $< >> $@
+# src/Interpreter.hs: build/SkelStarsepLang.hs
+#	echo "module Interpreter where" > $@
+#	tail -n+4 $< >> $@
 
-parser: grammar/StarsepLang.cf
+build: grammar/StarsepLang.cf
 	mkdir -p $@ && \
 	cd $@ && \
 	bnfc -haskell ../$<
 
 docs: docs/DocStarsepLang.html docs/DocStarsepLang.pdf
 
-parser/DocStarsepLang.txt: parser
+build/DocStarsepLang.txt: build
 
-docs/DocStarsepLang.html: parser/DocStarsepLang.txt
+docs/DocStarsepLang.html: build/DocStarsepLang.txt
 	txt2tags -t html -o $@ $<
 
-parser/DocStarsepLang.tex: parser/DocStarsepLang.txt
+build/DocStarsepLang.tex: build/DocStarsepLang.txt
 	txt2tags -t tex -o $@ $<
 
-docs/DocStarsepLang.pdf: parser/DocStarsepLang.tex
+docs/DocStarsepLang.pdf: build/DocStarsepLang.tex
 	latexmk -pdf -pdflatex="pdflatex -interaction=nonstopmode" -use-make -outdir=tmp $< && \
 	mv tmp/DocStarsepLang.pdf $@
 
 clean:
-	rm -rf parser build tmp $(BINARIES)
+	rm -rf build tmp $(BINARIES)
