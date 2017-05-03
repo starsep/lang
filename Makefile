@@ -1,5 +1,6 @@
 BINARIES=interpreter TestStarsepLang
 SHELL=/usr/bin/env bash
+SOURCES=src/Interpreter.hs src/Main.hs src/Environment.hs src/Typecheck.hs
 
 .PHONY: all clean build docs test linkSources
 
@@ -17,7 +18,7 @@ TestStarsepLang: build
 	alex -g LexStarsepLang.x && \
 	ghc --make TestStarsepLang.hs -o ../$@
 
-linkSources: src/Main.hs src/Interpreter.hs src/Environment.hs
+linkSources: $(SOURCES)
 	ln -srf $^ build
 
 interpreter: TestStarsepLang linkSources
