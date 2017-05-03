@@ -1,6 +1,6 @@
 BINARIES=interpreter TestStarsepLang
 SHELL=/usr/bin/env bash
-SOURCES=src/Interpreter.hs src/Main.hs src/Environment.hs src/Typecheck.hs
+SOURCES=src/Interpreter.hs src/Main.hs src/Environment.hs src/Typecheck.hs src/Errors.hs
 
 .PHONY: all clean build docs test linkSources
 
@@ -10,6 +10,12 @@ test: TestStarsepLang good
 	@for e in good/* ; do \
 		echo -e "\e[93m$1----------- TESTING\e[96m $$e \e[93m$1--------------\e[0m"; \
 		./TestStarsepLang < "$$e" ; \
+	done
+
+run: TestStarsepLang good
+	@for e in good/* ; do \
+		echo -e "\e[93m$1----------- RUNNING\e[96m $$e \e[93m$1--------------\e[0m"; \
+		./interpreter < "$$e" ; \
 	done
 
 TestStarsepLang: build
@@ -26,10 +32,6 @@ interpreter: TestStarsepLang linkSources
 	ghc --make Main.hs -o ../$@
 
 build/SkelStarsepLang.hs: build
-
-# src/Interpreter.hs: build/SkelStarsepLang.hs
-#	echo "module Interpreter where" > $@
-#	tail -n+4 $< >> $@
 
 build: grammar/StarsepLang.cf
 	mkdir -p $@ && \
