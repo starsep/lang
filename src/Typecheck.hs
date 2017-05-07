@@ -8,8 +8,19 @@ module Typecheck (typecheck) where
   import Control.Monad.RWS
 
   typeOf :: Expr -> TypecheckMonad Type
-  -- TODO: implement
-  typeOf expr = return Int
+  typeOf expr = do
+    state <- get
+    case expr of
+      EInt _ -> return Int
+      EFloat _ -> return Float
+      EString _ -> return Str
+      EFalse -> return Bool
+      ETrue -> return Bool
+      EVar ident -> do
+        checkVarDeclared ident
+        let Just (_, t) = Map.lookup ident state
+        return t
+      _ -> fail "typeOf unimplemented"
 
   fnHeaderToFnType :: Type -> [Arg] -> Type
   fnHeaderToFnType outputType args =
@@ -27,6 +38,72 @@ module Typecheck (typecheck) where
       Just (FnType [] Void) -> return ()
       _ -> Errors.badMain
 
+  checkShadow :: Ident -> TypecheckMonad ()
+  checkShadow ident = do
+    (typed, _) <- ask
+    state <- get
+    when (Map.member ident typed) $ lift $ Errors.shadowTopDef ident
+    when (Map.member ident state) $ lift $ Errors.shadowVariable ident
+
+  checkType :: Expr -> Type -> TypecheckMonad ()
+  checkType expr t = do
+    typeof <- typeOf expr
+    when (t /= typeof) $ lift $ Errors.expectedExpression expr typeof t
+
+  checkVarDeclared :: Ident -> TypecheckMonad ()
+  checkVarDeclared ident = do
+    state <- get
+    when (Map.notMember ident state) $ lift $ Errors.variableUndeclared ident
+
+  checkNonConst :: Ident -> TypecheckMonad ()
+  checkNonConst ident = do
+    state <- get
+    checkVarDeclared ident
+    let Just (isConst, _) = Map.lookup ident state
+    when isConst $ lift $ Errors.changingConst ident
+
+  itemIdent :: Item -> Ident
+  itemIdent item = case item of
+    Init ident _ -> ident
+    NoInit ident -> ident
+
+  typecheckDecl :: Item -> Type -> TypecheckMonad ()
+  typecheckDecl item t = do
+    case item of
+      NoInit ident -> checkShadow ident
+      Init ident expr -> do
+        checkShadow ident
+        checkType expr t
+    state <- get
+    put (Map.insert (itemIdent item) (False, t) state)
+
+  typecheckIncr :: Ident -> TypecheckMonad ()
+  typecheckIncr ident = do
+    checkVarDeclared ident
+    checkType (EVar ident) Int
+
+  typecheckLet :: Item -> Type -> TypecheckMonad ()
+  typecheckLet item expectedT = do
+    state <- get
+    let ident = itemIdent item
+    when (item == NoInit ident) $ lift $ Errors.letNoInit ident
+    let (Init _ expr) = item
+    checkType expr expectedT
+    put (Map.insert ident (True, expectedT) state)
+
+  typecheckLets :: [Item] -> TypecheckMonad ()
+  typecheckLets items = do
+    let first = head items
+        firstIdent = itemIdent first
+    when (first == NoInit firstIdent) $ lift $ Errors.letNoInit firstIdent
+    let (Init _ firstExpr) = first
+    expectedT <- typeOf firstExpr
+    forM_ items (`typecheckLet` expectedT)
+
+  typecheckAss :: Ident -> AssOp -> Expr -> TypecheckMonad ()
+  typecheckAss ident assOp expr = do
+    checkNonConst ident
+
   typecheckOper :: Oper -> TypecheckMonad ()
   typecheckOper oper = do
     (_, returnType) <- ask
@@ -35,13 +112,28 @@ module Typecheck (typecheck) where
       Ret expr -> do
         when (returnType == Void) $ lift $ Errors.retVoid expr
         t <- typeOf expr
-        when (returnType /= t) $ lift (Errors.badRetType expr t returnType)
-      _ -> return ()
-    lift $ print oper
+        when (returnType /= t) $ lift $ Errors.badRetType expr t returnType
+      Decl t items -> forM_ items (`typecheckDecl` t)
+      Incr ident -> typecheckIncr ident
+      Decr ident -> typecheckIncr ident
+      Let items -> typecheckLets items
+      Ass ident assOp expr -> typecheckAss ident assOp expr
+      _ -> fail $ "typecheckOper unimplemented for " ++ show oper
+    return ()
+
+  typecheckERel :: Expr -> RelOp -> Expr -> TypecheckMonad ()
+  typecheckERel expr1 relOp expr2 = do
+    type1 <- typeOf expr1
+    type2 <- typeOf expr2
     return ()
 
   typecheckBExpr :: Expr -> TypecheckMonad ()
-  typecheckBExpr bExpr = return ()
+  typecheckBExpr bExpr = do
+    case bExpr of
+      EFalse -> return ()
+      ETrue -> return ()
+      ERel expr1 relOp expr2 -> typecheckERel expr1 relOp expr2
+      _ -> fail $ "typecheckBExpr unimplemented for " ++ show bExpr
 
   typecheckIfStmt :: IfStmt -> TypecheckMonad ()
   typecheckIfStmt ifStmt = do

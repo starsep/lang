@@ -8,6 +8,7 @@ import Environment
 import ErrM
 import qualified Errors
 import Typecheck
+import Control.Monad.Trans
 import System.Environment (getArgs)
 import System.IO (openFile, IOMode(ReadMode), hGetContents, stdin)
 
@@ -23,6 +24,8 @@ interpreter :: String -> IO String
 interpreter code = do
   prog <- case pProgram (myLexer code) of
     Ok p -> return p
-    Bad msg -> Errors.parsing msg
+    Bad msg -> do
+      liftIO $ Errors.parsing msg
+      return $ Program []
   typecheck prog
   return $ show prog

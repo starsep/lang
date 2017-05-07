@@ -1,6 +1,7 @@
 module Errors
   (parsing, typecheck, multipleFnDef, noMain, badMain, vRetNoVoid, retVoid,
-   badRetType) where
+   badRetType, expectedExpression, shadowTopDef, shadowVariable,
+   variableUndeclared, letNoInit, changingConst) where
   import AbsStarsepLang
   import System.IO
   import Data.Char
@@ -30,13 +31,15 @@ module Errors
     normalColor
     putStrLn msg
 
-  parsing :: String -> IO Program
+  parsing :: String -> IO ()
   parsing msg = do
     printError $ "parsing failed, " ++ msg
-    return $ Program []
 
   typecheck :: String -> IO ()
   typecheck msg = printError $ "typecheck failed, " ++ msg
+
+  typecheckWarn :: String -> IO ()
+  typecheckWarn msg = printWarning $ "typecheck: " ++ msg
 
   multipleFnDef :: Ident -> IO ()
   multipleFnDef (Ident name) = typecheck $ "multiple definitions of function " ++ name
@@ -57,3 +60,24 @@ module Errors
   badRetType :: Expr -> Type -> Type -> IO ()
   badRetType e t rt = typecheck $ "returning " ++ show e ++ " (typeof = " ++
     show t ++ ") in function returning " ++ show rt
+
+  expectedExpression :: Expr -> Type -> Type -> IO ()
+  expectedExpression e t expected = typecheck $ "expected expression of type " ++
+    show expected ++ " got " ++ show e ++ " (typeof = " ++ show t ++ ")"
+
+  shadowTopDef :: Ident -> IO ()
+  shadowTopDef (Ident name) = typecheck $ "shadowing function " ++ name
+
+  shadowVariable :: Ident -> IO ()
+  shadowVariable (Ident name) = typecheckWarn $ "shadowing variable " ++ name
+
+  variableUndeclared :: Ident -> IO ()
+  variableUndeclared (Ident name) = typecheck $ "variable " ++ name
+    ++ " is undeclared"
+
+  letNoInit :: Ident -> IO ()
+  letNoInit (Ident name) = typecheck $ "declaring constant " ++ name
+      ++ " without init"
+
+  changingConst :: Ident -> IO ()
+  changingConst (Ident name) = typecheck $ "you cannot change constant " ++ name
