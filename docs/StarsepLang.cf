@@ -1,17 +1,17 @@
 -- Programs ------------------------------------------------
 
 entrypoints   Program ;
-ProgramDecl.  Program ::= [TopDef] ;
+Program.      Program ::= [FnDef] ;
 
-FnDef.	      TopDef ::= Type Ident "(" [Arg] ")" Block ;
-separator nonempty TopDef "" ;
+FnDef.	      FnDef ::= Type Ident "(" [Arg] ")" Block ;
+separator nonempty FnDef "" ;
 
-ArgDecl.      Arg ::= Type Ident ;
+Arg.          Arg ::= Type Ident ;
 separator Arg "," ;
 
 -- Statements ----------------------------------------------
 
-BlockDecl.    Block ::= "{" [Stmt] "}" ;
+Block.        Block ::= "{" [Stmt] "}" ;
 BStmt.        Stmt ::= Block ;
 separator     Stmt "" ;
 
@@ -34,9 +34,9 @@ For.          Stmt ::= "for" Oper ";" Expr ";" Oper Block ;
 Foreach.      Stmt ::= "for" Ident "in" Expr Block ;
 Loop.         Stmt ::= "loop" Block ;
 
-CondElif.     IfStmt ::= IfStmt "elif" Expr Block;
-CondElse.     IfElseStmt ::= IfStmt "else" Block ;
-Cond.         IfStmt ::= "if" Expr Block ;
+IfElifStmt.    IfStmt ::= IfStmt "elif" Expr Block;
+IfElseStmt.    IfElseStmt ::= IfStmt "else" Block ;
+IfStmt.        IfStmt ::= "if" Expr Block ;
 
 CondIf.       Stmt   ::= IfStmt ;
 ElseStmt.     Stmt   ::= IfElseStmt ;
@@ -49,8 +49,8 @@ Bool.         Type ::= "bool" ;
 Float.        Type ::= "float" ;
 Void.         Type ::= "void" ;
 TypeOf.       Type ::= "typeof" "(" Expr ")" ;
-FnType.       Type ::= "Fn" "<" Type ">" ;
-FnArgType.    Type ::= "Fn" "<" [Type] "->" Type ">" ;
+FnNoArgsType. Type ::= "Fn" "<" Type ">" ;
+FnType.       Type ::= "Fn" "<" [Type] "->" Type ">" ;
 separator nonempty Type "," ;
 
 -- Expressions ---------------------------------------------
