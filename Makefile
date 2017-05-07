@@ -12,8 +12,20 @@ test: TestStarsepLang good
 		./TestStarsepLang < "$$e" ; \
 	done
 
-run: TestStarsepLang good
+testBad: TestStarsepLang bad
+	@for e in bad/* ; do \
+		echo -e "\e[93m$1----------- TESTING\e[96m $$e \e[93m$1--------------\e[0m"; \
+		./TestStarsepLang < "$$e" ; \
+	done
+
+run: interpreter good
 	@for e in good/* ; do \
+		echo -e "\e[93m$1----------- RUNNING\e[96m $$e \e[93m$1--------------\e[0m"; \
+		./interpreter < "$$e" ; \
+	done
+
+runBad: interpreter bad
+	@-for e in bad/* ; do \
 		echo -e "\e[93m$1----------- RUNNING\e[96m $$e \e[93m$1--------------\e[0m"; \
 		./interpreter < "$$e" ; \
 	done
