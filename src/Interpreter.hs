@@ -12,16 +12,16 @@ transIdent x = case x of
   Ident string -> failure x
 transProgram :: Program -> Result
 transProgram x = case x of
-  ProgramDecl topdefs -> failure x
-transTopDef :: TopDef -> Result
-transTopDef x = case x of
+  Program fndefs -> failure x
+transFnDef :: FnDef -> Result
+transFnDef x = case x of
   FnDef type_ ident args block -> failure x
 transArg :: Arg -> Result
 transArg x = case x of
-  ArgDecl type_ ident -> failure x
+  Arg type_ ident -> failure x
 transBlock :: Block -> Result
 transBlock x = case x of
-  BlockDecl stmts -> failure x
+  Block stmts -> failure x
 transStmt :: Stmt -> Result
 transStmt x = case x of
   BStmt block -> failure x
@@ -48,11 +48,11 @@ transItem x = case x of
   Init ident expr -> failure x
 transIfStmt :: IfStmt -> Result
 transIfStmt x = case x of
-  CondElif ifstmt expr block -> failure x
-  Cond expr block -> failure x
+  IfElifStmt ifstmt expr block -> failure x
+  IfStmt expr block -> failure x
 transIfElseStmt :: IfElseStmt -> Result
 transIfElseStmt x = case x of
-  CondElse ifstmt block -> failure x
+  IfElseStmt ifstmt block -> failure x
 transType :: Type -> Result
 transType x = case x of
   Int -> failure x
@@ -61,8 +61,8 @@ transType x = case x of
   Float -> failure x
   Void -> failure x
   TypeOf expr -> failure x
-  FnType type_ -> failure x
-  FnArgType types type_ -> failure x
+  FnNoArgsType type_ -> failure x
+  FnType types type_ -> failure x
 transExpr :: Expr -> Result
 transExpr x = case x of
   EFun ident exprs -> failure x
@@ -106,4 +106,3 @@ transAssOp x = case x of
   MulAss -> failure x
   DivAss -> failure x
   ModAss -> failure x
-
