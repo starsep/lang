@@ -1,0 +1,7 @@
+float abc() {
+    return "abc";
+}
+
+void main() {
+    abc();
+}

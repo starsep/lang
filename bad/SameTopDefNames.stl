@@ -1,0 +1,12 @@
+float foo(int a) {
+    return 42.0 + a;
+}
+
+float foo() {
+    return 12.5;
+}
+
+
+void main() {
+
+}

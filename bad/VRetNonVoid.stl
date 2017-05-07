@@ -1,0 +1,10 @@
+int foo(int x) {
+    if (x < 12) {
+        return;
+    }
+    return 42 + x;
+}
+
+void main() {
+    int z = foo(4);
+}

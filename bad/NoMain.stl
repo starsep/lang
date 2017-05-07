@@ -1,0 +1,7 @@
+int foo() {
+    return 42;
+}
+
+float bar() {
+    return 3.14;
+}

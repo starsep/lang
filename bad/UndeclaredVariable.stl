@@ -1,0 +1,6 @@
+void main() {
+    int y = 42;
+    if (x < 5) {
+        y++;
+    }
+}
