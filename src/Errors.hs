@@ -1,7 +1,7 @@
 module Errors
   (parsing, typecheck, multipleFnDef, noMain, badMain, vRetNoVoid, retVoid,
    badRetType, expectedExpression, shadowTopDef, shadowVariable,
-   variableUndeclared, letNoInit, changingConst) where
+   variableUndeclared, letNoInit, changingConst, diffTypesBinOp) where
   import AbsStarsepLang
   import System.IO
   import Data.Char
@@ -81,3 +81,7 @@ module Errors
 
   changingConst :: Ident -> IO ()
   changingConst (Ident name) = typecheck $ "you cannot change constant " ++ name
+
+  diffTypesBinOp :: Type -> Type -> IO ()
+  diffTypesBinOp t1 t2 = typecheck $ "binary operation on different types: " ++
+    show t1 ++ " and " ++ show t2

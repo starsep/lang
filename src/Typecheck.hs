@@ -20,7 +20,32 @@ module Typecheck (typecheck) where
         checkVarDeclared ident
         let Just (_, t) = Map.lookup ident state
         return t
-      _ -> fail "typeOf unimplemented"
+      EAdd e1 addOp e2 -> checkAddOp e1 addOp e2
+      EMul e1 mulOp e2 -> checkMulOp e1 mulOp e2
+      EFun ident exprs -> outputTypeFun ident exprs
+      _ -> fail $ "typeOf unimplemented for " ++ show expr
+
+  checkBinOp :: Expr -> Expr -> TypecheckMonad Type
+  checkBinOp expr1 expr2 = do
+    t1 <- typeOf expr1
+    t2 <- typeOf expr2
+    when (t1 /= t2) $ lift $ Errors.diffTypesBinOp t1 t2
+    return t1
+
+  checkAddOp :: Expr -> AddOp -> Expr -> TypecheckMonad Type
+  checkAddOp expr1 addOp expr2 = do
+    checkBinOp expr1 expr2
+
+  checkMulOp :: Expr -> MulOp -> Expr -> TypecheckMonad Type
+  checkMulOp expr1 mulOp expr2 = do
+      checkBinOp expr1 expr2
+
+  outputTypeFun :: Ident -> [Expr] -> TypecheckMonad Type
+  outputTypeFun ident exprs = do
+    (typed, _) <- ask
+    case Map.lookup ident typed of
+      Just t -> return t
+      Nothing -> fail "outputTypeFun unimplemented"
 
   fnHeaderToFnType :: Type -> [Arg] -> Type
   fnHeaderToFnType outputType args =
