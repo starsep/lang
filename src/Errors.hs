@@ -1,7 +1,8 @@
 module Errors
   (parsing, typecheck, multipleFnDef, noMain, badMain, vRetNoVoid, retVoid,
    badRetType, expectedExpression, shadowTopDef, shadowVariable,
-   variableUndeclared, letNoInit, changingConst, diffTypesBinOp) where
+   variableUndeclared, letNoInit, changingConst, diffTypesBinOp,
+   sameArgNames, nonNumeric, nonBoolean) where
   import AbsStarsepLang
   import System.IO
   import Data.Char
@@ -85,3 +86,12 @@ module Errors
   diffTypesBinOp :: Type -> Type -> IO ()
   diffTypesBinOp t1 t2 = typecheck $ "binary operation on different types: " ++
     show t1 ++ " and " ++ show t2
+
+  sameArgNames :: Ident -> IO ()
+  sameArgNames (Ident arg) = typecheck $ "duplicate argument name " ++ arg
+
+  nonNumeric :: Expr -> IO ()
+  nonNumeric expr = typecheck $ show expr ++ " is not numeric"
+
+  nonBoolean :: Expr -> IO ()
+  nonBoolean expr = typecheck $ show expr ++ " is not boolean"

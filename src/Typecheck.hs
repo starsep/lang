@@ -11,26 +11,62 @@ module Typecheck (typecheck) where
   typeOf expr = do
     state <- get
     case expr of
+      EFun ident exprs -> outputTypeFun ident exprs
+      EVar ident -> do
+        checkVarDeclared ident
+        let Just (_, t) = Map.lookup ident state
+        return t
       EInt _ -> return Int
       EFloat _ -> return Float
       EString _ -> return Str
       EFalse -> return Bool
       ETrue -> return Bool
-      EVar ident -> do
-        checkVarDeclared ident
-        let Just (_, t) = Map.lookup ident state
-        return t
+      ENeg expr -> checkNeg expr
+      ENot expr -> do
+        typecheckBExpr expr
+        return Bool
       EAdd e1 addOp e2 -> checkAddOp e1 addOp e2
       EMul e1 mulOp e2 -> checkMulOp e1 mulOp e2
-      EFun ident exprs -> outputTypeFun ident exprs
-      _ -> fail $ "typeOf unimplemented for " ++ show expr
+      ERel e1 relOp e2 -> do
+        checkRelOp e1 relOp e2
+        return Bool
+      EOr b1 b2 -> checkBExprOp b1 b2
+      EAnd b1 b2 -> checkBExprOp b1 b2
+      ETernary b e1 e2 -> do
+        typecheckBExpr b
+        checkRelOp e1 EQU e2
+        typeOf e1
+      Lambda args expr ->
+        checkLambda args expr
+
+  checkLambda :: [Ident] -> Expr -> TypecheckMonad Type
+  checkLambda args expr = typeOf expr
+
+  checkBExprOp :: Expr -> Expr -> TypecheckMonad Type
+  checkBExprOp b1 b2 = do
+    typecheckBExpr b1
+    typecheckBExpr b2
+    return Bool
 
   checkBinOp :: Expr -> Expr -> TypecheckMonad Type
   checkBinOp expr1 expr2 = do
     t1 <- typeOf expr1
     t2 <- typeOf expr2
-    when (t1 /= t2) $ lift $ Errors.diffTypesBinOp t1 t2
+    unless (t1 == t2) $ lift $ Errors.diffTypesBinOp t1 t2
     return t1
+
+  checkNumericExpr :: Expr -> TypecheckMonad ()
+  checkNumericExpr expr = do
+    t <- typeOf expr
+    case t of
+      Int -> return ()
+      Float -> return ()
+      _ -> lift $ Errors.nonNumeric expr
+
+  checkNeg :: Expr -> TypecheckMonad Type
+  checkNeg expr = do
+    checkNumericExpr expr
+    typeOf expr
 
   checkAddOp :: Expr -> AddOp -> Expr -> TypecheckMonad Type
   checkAddOp expr1 addOp expr2 = do
@@ -40,12 +76,16 @@ module Typecheck (typecheck) where
   checkMulOp expr1 mulOp expr2 = do
       checkBinOp expr1 expr2
 
+  checkFunExec :: Ident -> [Expr] -> TypecheckMonad ()
+  checkFunExec ident args = do
+    return ()
+
   outputTypeFun :: Ident -> [Expr] -> TypecheckMonad Type
-  outputTypeFun ident exprs = do
+  outputTypeFun ident args = do
     (typed, _) <- ask
     case Map.lookup ident typed of
-      Just t -> return t
-      Nothing -> fail "outputTypeFun unimplemented"
+      Just (FnType _ t) -> return t
+      Nothing -> fail $ "outputTypeFun unimplemented for " ++ show ident
 
   fnHeaderToFnType :: Type -> [Arg] -> Type
   fnHeaderToFnType outputType args =
@@ -133,40 +173,42 @@ module Typecheck (typecheck) where
   typecheckOper oper = do
     (_, returnType) <- ask
     case oper of
-      VRet -> when (returnType /= Void) $ lift $ Errors.vRetNoVoid returnType
+      Decl t items -> forM_ items (`typecheckDecl` t)
+      Let items -> typecheckLets items
+      Ass ident assOp expr -> typecheckAss ident assOp expr
+      Incr ident -> typecheckIncr ident
+      Decr ident -> typecheckIncr ident
       Ret expr -> do
         when (returnType == Void) $ lift $ Errors.retVoid expr
         t <- typeOf expr
         when (returnType /= t) $ lift $ Errors.badRetType expr t returnType
-      Decl t items -> forM_ items (`typecheckDecl` t)
-      Incr ident -> typecheckIncr ident
-      Decr ident -> typecheckIncr ident
-      Let items -> typecheckLets items
-      Ass ident assOp expr -> typecheckAss ident assOp expr
-      _ -> fail $ "typecheckOper unimplemented for " ++ show oper
+      VRet -> when (returnType /= Void) $ lift $ Errors.vRetNoVoid returnType
+      FnExec ident args -> checkFunExec ident args
     return ()
 
-  typecheckERel :: Expr -> RelOp -> Expr -> TypecheckMonad ()
-  typecheckERel expr1 relOp expr2 = do
-    type1 <- typeOf expr1
-    type2 <- typeOf expr2
+  checkRelOp :: Expr -> RelOp -> Expr -> TypecheckMonad ()
+  checkRelOp expr1 relOp expr2 = do
+    _ <- checkBinOp expr1 expr2
     return ()
 
   typecheckBExpr :: Expr -> TypecheckMonad ()
   typecheckBExpr bExpr = do
-    case bExpr of
-      EFalse -> return ()
-      ETrue -> return ()
-      ERel expr1 relOp expr2 -> typecheckERel expr1 relOp expr2
-      _ -> fail $ "typecheckBExpr unimplemented for " ++ show bExpr
+    t <- typeOf bExpr
+    case t of
+      Bool -> return ()
+      _ -> lift $ Errors.nonBoolean bExpr
 
   typecheckIfStmt :: IfStmt -> TypecheckMonad ()
   typecheckIfStmt ifStmt = do
-    case ifStmt of IfStmt expr block -> do {
-      typecheckBExpr expr;
-      typecheckBlock block
-    }
-    lift $ print ifStmt
+    case ifStmt of
+      IfStmt expr block -> do
+        typecheckBExpr expr
+        typecheckBlock block
+      IfElifStmt nextIf expr block -> do
+        typecheckBExpr expr
+        typecheckBlock block
+        typecheckIfStmt nextIf
+    -- lift $ print ifStmt
     return ()
 
   typecheckStmt :: Stmt -> TypecheckMonad ()
@@ -187,9 +229,15 @@ module Typecheck (typecheck) where
     forM_ stmts typecheckStmt
     return ()
 
+  addFunctionArgToState :: TCState -> Arg -> IO TCState
+  addFunctionArgToState state (Arg t arg) = do
+    when (Map.member arg state) $ Errors.sameArgNames arg
+    return $ Map.insert arg (False, t) state
+
   typecheckFunction :: FnDef -> TypedFnDefs -> IO ()
   typecheckFunction (FnDef outputType ident args body) typed = do
-    runRWST (typecheckBlock body) (typed, outputType) Map.empty
+    funState <- foldM addFunctionArgToState Map.empty args
+    runRWST (typecheckBlock body) (typed, outputType) funState
     return ()
 
   typecheck :: Program -> IO ()

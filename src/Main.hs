@@ -28,4 +28,4 @@ interpreter code = do
       liftIO $ Errors.parsing msg
       return $ Program []
   typecheck prog
-  return $ show prog
+  return "" -- $ show prog
