@@ -2,7 +2,8 @@ module Errors
   (parsing, typecheck, multipleFnDef, noMain, badMain, vRetNoVoid, retVoid,
    badRetType, expectedExpression, shadowTopDef, shadowVariable,
    variableUndeclared, letNoInit, changingConst, diffTypesBinOp,
-   sameArgNames, nonNumeric, nonBoolean) where
+   sameArgNames, nonNumeric, nonBoolean, functionUndeclared, notLambda,
+   numberOfArgs, typesOfArgs, nonIterable) where
   import AbsStarsepLang
   import System.IO
   import Data.Char
@@ -90,8 +91,29 @@ module Errors
   sameArgNames :: Ident -> IO ()
   sameArgNames (Ident arg) = typecheck $ "duplicate argument name " ++ arg
 
-  nonNumeric :: Expr -> IO ()
-  nonNumeric expr = typecheck $ show expr ++ " is not numeric"
+  nonNumeric :: Expr -> Type -> IO ()
+  nonNumeric expr t = typecheck $ show expr ++ " is not numeric (typeof = " ++
+    show t ++ ")"
 
   nonBoolean :: Expr -> IO ()
   nonBoolean expr = typecheck $ show expr ++ " is not boolean"
+
+  nonIterable :: Expr -> Type -> IO ()
+  nonIterable expr t = typecheck $ show expr ++ " is not iterable (typeof = " ++
+    show t ++ ")"
+
+  functionUndeclared :: Ident -> IO ()
+  functionUndeclared (Ident name) = typecheck $ "function " ++ name ++
+    " is not declared in this scope"
+
+  notLambda :: Ident -> IO ()
+  notLambda (Ident name) = typecheck $ name ++ " is not a lambda nor function"
+
+  numberOfArgs :: Ident -> Int -> Int -> IO ()
+  numberOfArgs (Ident name) nArgs expected = typecheck $ "function " ++ name ++
+    " expected " ++ show expected ++ " argument(s), " ++ show nArgs ++ " given"
+
+  typesOfArgs :: Ident -> [Type] -> [Type] -> IO ()
+  typesOfArgs (Ident name) argsTypes types = typecheck $ "function " ++
+    name ++ " args types are " ++ show types ++
+    ", trying to invoke function with args types " ++ show argsTypes

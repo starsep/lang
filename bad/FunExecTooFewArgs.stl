@@ -1,0 +1,7 @@
+int sqr(int x) {
+    return x * x;
+}
+
+void main() {
+    int a = sqr();
+}

@@ -1,0 +1,5 @@
+void main() {
+    loop {
+        x = 42;
+    }
+}

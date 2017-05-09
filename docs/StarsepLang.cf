@@ -27,6 +27,8 @@ Decr.         Oper ::= Ident "--" ;
 Ret.          Oper ::= "return" Expr ;
 VRet.         Oper ::= "return" ;
 FnExec.       Oper ::= Ident "(" [Expr] ")" ;
+Print.        Oper ::= "print" "(" Expr ")" ;
+Assert.       Oper ::= "assert" "(" Expr ")" ;
 
 OperStmt.     Stmt ::= Oper ";" ;
 While.        Stmt ::= "while" Expr Block ;
@@ -44,20 +46,21 @@ ElseStmt.     Stmt   ::= IfElseStmt ;
 -- Types ---------------------------------------------------
 
 Int.          Type ::= "int" ;
+Char.         Type ::= "char" ;
 Str.          Type ::= "string" ;
 Bool.         Type ::= "bool" ;
 Float.        Type ::= "float" ;
 Void.         Type ::= "void" ;
 TypeOf.       Type ::= "typeof" "(" Expr ")" ;
-FnNoArgsType. Type ::= "Fn" "<" Type ">" ;
-FnType.       Type ::= "Fn" "<" [Type] "->" Type ">" ;
-separator nonempty Type "," ;
+FnType.       Type ::= "Fn" "<" [Type] ">" ;
+separator nonempty Type "->" ;
 
 -- Expressions ---------------------------------------------
 
 EFun.         Expr8 ::= Ident "(" [Expr] ")" ;
 EVar.         Expr7 ::= Ident ;
 EInt.         Expr7 ::= Integer ;
+EChar.        Expr7 ::= Char ;
 EFloat.       Expr7 ::= Double ;
 EString.      Expr7 ::= String ;
 EFalse.       Expr7 ::= "false" ;
@@ -76,8 +79,7 @@ separator     Expr "," ;
 
 -- Lambdas -------------------------------------------------
 
-separator     Ident "," ;
-Lambda.       Expr ::= "@" "(" [Ident] ")" "->" Expr ;
+Lambda.       Expr ::= "@" "(" [Arg] ")" "->" Expr ;
 
 -- Operators -----------------------------------------------
 

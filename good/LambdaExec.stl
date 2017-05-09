@@ -1,0 +1,4 @@
+void main() {
+    let cube = @(int x) -> x * x * x;
+    int a = cube(42);
+}

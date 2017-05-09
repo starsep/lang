@@ -10,5 +10,5 @@ void main() {
     Fn<void> bar1 = foo1;
     Fn<int -> void> bar2 = foo2;
     Fn<int> bar3 = foo3;
-    Fn<int, int -> int> bar4 = foo4;
+    Fn<int -> int -> int> bar4 = foo4;
 }

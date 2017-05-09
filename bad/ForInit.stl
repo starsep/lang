@@ -1,0 +1,5 @@
+void main() {
+    for int i = "abc"; i < 42; i++ {
+        print(i);
+    }
+}

@@ -7,6 +7,5 @@ int factorial(int n) {
 }
 
 void main() {
-    let n = 10;
-    print(factorial(n));
+    assert(factorial(10) == 3628800);
 }

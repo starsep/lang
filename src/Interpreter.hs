@@ -61,8 +61,7 @@ transType x = case x of
   Float -> failure x
   Void -> failure x
   TypeOf expr -> failure x
-  FnNoArgsType type_ -> failure x
-  FnType types type_ -> failure x
+  FnType types -> failure x
 transExpr :: Expr -> Result
 transExpr x = case x of
   EFun ident exprs -> failure x

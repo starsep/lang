@@ -1,22 +1,23 @@
 module Typecheck (typecheck) where
   import AbsStarsepLang
-  import ErrM
   import qualified Data.Map as Map
   import qualified Errors
-  import Environment
   import Control.Monad
   import Control.Monad.RWS
+  import Data.Maybe
 
-  typeOf :: Expr -> TypecheckMonad Type
-  typeOf expr = do
-    state <- get
+  type TypedFnDefs = Map.Map Ident Type
+  type TCEnv = (TypedFnDefs, Type)
+  type TCState = Map.Map Ident (Bool, Type)
+  type TCMonad = RWST TCEnv () TCState IO
+
+  typeOf :: Expr -> TCMonad Type
+  typeOf expr =
     case expr of
-      EFun ident exprs -> outputTypeFun ident exprs
-      EVar ident -> do
-        checkVarDeclared ident
-        let Just (_, t) = Map.lookup ident state
-        return t
+      EFun ident exprs -> outputType ident exprs
+      EVar ident -> typeOfIdent ident
       EInt _ -> return Int
+      EChar _ -> return Char
       EFloat _ -> return Float
       EString _ -> return Str
       EFalse -> return Bool
@@ -36,91 +37,157 @@ module Typecheck (typecheck) where
         typecheckBExpr b
         checkRelOp e1 EQU e2
         typeOf e1
-      Lambda args expr ->
-        checkLambda args expr
+      Lambda args expr -> typeOfLambda args expr
 
-  checkLambda :: [Ident] -> Expr -> TypecheckMonad Type
-  checkLambda args expr = typeOf expr
+  typeOfFun :: Ident -> TCMonad Type
+  typeOfFun ident = do
+    (typed, _) <- ask
+    return $ fromJust $ Map.lookup ident typed
 
-  checkBExprOp :: Expr -> Expr -> TypecheckMonad Type
+  typeOfVar :: Ident -> TCMonad Type
+  typeOfVar ident = do
+    state <- get
+    checkVarDeclared ident
+    let Just (_, t) = Map.lookup ident state
+    return t
+
+  typeOfIdent :: Ident -> TCMonad Type
+  typeOfIdent ident = do
+    (typed, _) <- ask
+    if Map.member ident typed then
+      typeOfFun ident
+    else
+      typeOfVar ident
+
+  typeOfLambda :: [Arg] -> Expr -> TCMonad Type
+  typeOfLambda args expr = do
+    state <- get
+    lambdaState <- lift $ foldM addFunctionArgToState state args
+    put lambdaState
+    outType <- typeOf expr
+    put state
+    return $ fnHeaderToFnType outType args
+
+  checkBExprOp :: Expr -> Expr -> TCMonad Type
   checkBExprOp b1 b2 = do
     typecheckBExpr b1
     typecheckBExpr b2
     return Bool
 
-  checkBinOp :: Expr -> Expr -> TypecheckMonad Type
+  checkBinOp :: Expr -> Expr -> TCMonad Type
   checkBinOp expr1 expr2 = do
     t1 <- typeOf expr1
     t2 <- typeOf expr2
     unless (t1 == t2) $ lift $ Errors.diffTypesBinOp t1 t2
     return t1
 
-  checkNumericExpr :: Expr -> TypecheckMonad ()
+  checkNumericExpr :: Expr -> TCMonad ()
   checkNumericExpr expr = do
     t <- typeOf expr
     case t of
       Int -> return ()
       Float -> return ()
-      _ -> lift $ Errors.nonNumeric expr
+      _ -> lift $ Errors.nonNumeric expr t
 
-  checkNeg :: Expr -> TypecheckMonad Type
+  checkIterableExpr :: Expr -> TCMonad ()
+  checkIterableExpr expr = do
+    t <- typeOf expr
+    case t of
+      Str -> return ()
+      _ -> lift $ Errors.nonIterable expr t
+
+  iterableElemType :: Expr -> TCMonad Type
+  iterableElemType expr = do
+    t <- typeOf expr
+    case t of
+      Str -> return Char
+
+  checkNeg :: Expr -> TCMonad Type
   checkNeg expr = do
     checkNumericExpr expr
     typeOf expr
 
-  checkAddOp :: Expr -> AddOp -> Expr -> TypecheckMonad Type
-  checkAddOp expr1 addOp expr2 = do
-    checkBinOp expr1 expr2
+  checkAddOp :: Expr -> AddOp -> Expr -> TCMonad Type
+  checkAddOp expr1 addOp expr2 = checkBinOp expr1 expr2
 
-  checkMulOp :: Expr -> MulOp -> Expr -> TypecheckMonad Type
-  checkMulOp expr1 mulOp expr2 = do
-      checkBinOp expr1 expr2
+  checkMulOp :: Expr -> MulOp -> Expr -> TCMonad Type
+  checkMulOp expr1 mulOp expr2 = checkBinOp expr1 expr2
 
-  checkFunExec :: Ident -> [Expr] -> TypecheckMonad ()
-  checkFunExec ident args = do
-    return ()
+  checkFunExec :: Ident -> [Expr] -> TCMonad ()
+  checkFunExec ident args = return ()
 
-  outputTypeFun :: Ident -> [Expr] -> TypecheckMonad Type
+  checkArgs :: Ident -> [Expr] -> [Type] -> TCMonad Type
+  checkArgs ident args t = do
+    let nArgs = length args
+        expected = length t - 1
+    when (nArgs /= expected) $ lift $ Errors.numberOfArgs ident nArgs expected
+    argsTypes <- mapM typeOf args
+    let types = take expected t
+    when (argsTypes /= types) $ lift $ Errors.typesOfArgs ident argsTypes types
+    return $ last types
+
+  outputTypeLambda :: Ident -> [Expr] -> TCMonad Type
+  outputTypeLambda ident args = do
+    state <- get
+    let Just (_, t) = Map.lookup ident state
+    case t of
+      FnType types -> checkArgs ident args types
+      _ -> do
+        lift $ Errors.notLambda ident
+        return Int
+
+  outputTypeFun :: Ident -> [Expr] -> TCMonad Type
   outputTypeFun ident args = do
     (typed, _) <- ask
-    case Map.lookup ident typed of
-      Just (FnType _ t) -> return t
-      Nothing -> fail $ "outputTypeFun unimplemented for " ++ show ident
+    let Just (FnType types) = Map.lookup ident typed
+    checkArgs ident args types
+
+  outputType :: Ident -> [Expr] -> TCMonad Type
+  outputType ident args = do
+    (typed, _) <- ask
+    state <- get
+    if Map.member ident typed then
+      outputTypeFun ident args
+    else if Map.member ident state then
+      outputTypeLambda ident args
+    else do
+      _ <- lift $ Errors.functionUndeclared ident
+      return Int
 
   fnHeaderToFnType :: Type -> [Arg] -> Type
-  fnHeaderToFnType outputType args =
-    FnType (map (\arg -> case arg of Arg t _ -> t) args) outputType
+  fnHeaderToFnType outType args =
+    FnType $ map (\arg -> case arg of Arg t _ -> t) args ++ [outType]
 
   addTypedFnDef :: TypedFnDefs -> FnDef -> IO TypedFnDefs
-  addTypedFnDef typed (FnDef outputType ident args _) = do
+  addTypedFnDef typed (FnDef outType ident args _) = do
     when (Map.member ident typed) $ Errors.multipleFnDef ident
-    return $ Map.insert ident (fnHeaderToFnType outputType args) typed
+    return $ Map.insert ident (fnHeaderToFnType outType args) typed
 
   checkMain :: TypedFnDefs -> IO ()
   checkMain typedFns = do
     when (Map.notMember (Ident "main") typedFns) Errors.noMain
     case Map.lookup (Ident "main") typedFns of
-      Just (FnType [] Void) -> return ()
+      Just (FnType [Void]) -> return ()
       _ -> Errors.badMain
 
-  checkShadow :: Ident -> TypecheckMonad ()
+  checkShadow :: Ident -> TCMonad ()
   checkShadow ident = do
     (typed, _) <- ask
     state <- get
     when (Map.member ident typed) $ lift $ Errors.shadowTopDef ident
     when (Map.member ident state) $ lift $ Errors.shadowVariable ident
 
-  checkType :: Expr -> Type -> TypecheckMonad ()
+  checkType :: Expr -> Type -> TCMonad ()
   checkType expr t = do
     typeof <- typeOf expr
     when (t /= typeof) $ lift $ Errors.expectedExpression expr typeof t
 
-  checkVarDeclared :: Ident -> TypecheckMonad ()
+  checkVarDeclared :: Ident -> TCMonad ()
   checkVarDeclared ident = do
     state <- get
     when (Map.notMember ident state) $ lift $ Errors.variableUndeclared ident
 
-  checkNonConst :: Ident -> TypecheckMonad ()
+  checkNonConst :: Ident -> TCMonad ()
   checkNonConst ident = do
     state <- get
     checkVarDeclared ident
@@ -132,7 +199,7 @@ module Typecheck (typecheck) where
     Init ident _ -> ident
     NoInit ident -> ident
 
-  typecheckDecl :: Item -> Type -> TypecheckMonad ()
+  typecheckDecl :: Item -> Type -> TCMonad ()
   typecheckDecl item t = do
     case item of
       NoInit ident -> checkShadow ident
@@ -142,12 +209,12 @@ module Typecheck (typecheck) where
     state <- get
     put (Map.insert (itemIdent item) (False, t) state)
 
-  typecheckIncr :: Ident -> TypecheckMonad ()
+  typecheckIncr :: Ident -> TCMonad ()
   typecheckIncr ident = do
     checkVarDeclared ident
     checkType (EVar ident) Int
 
-  typecheckLet :: Item -> Type -> TypecheckMonad ()
+  typecheckLet :: Item -> Type -> TCMonad ()
   typecheckLet item expectedT = do
     state <- get
     let ident = itemIdent item
@@ -156,7 +223,7 @@ module Typecheck (typecheck) where
     checkType expr expectedT
     put (Map.insert ident (True, expectedT) state)
 
-  typecheckLets :: [Item] -> TypecheckMonad ()
+  typecheckLets :: [Item] -> TCMonad ()
   typecheckLets items = do
     let first = head items
         firstIdent = itemIdent first
@@ -165,11 +232,10 @@ module Typecheck (typecheck) where
     expectedT <- typeOf firstExpr
     forM_ items (`typecheckLet` expectedT)
 
-  typecheckAss :: Ident -> AssOp -> Expr -> TypecheckMonad ()
-  typecheckAss ident assOp expr = do
-    checkNonConst ident
+  typecheckAss :: Ident -> AssOp -> Expr -> TCMonad ()
+  typecheckAss ident assOp expr = checkNonConst ident
 
-  typecheckOper :: Oper -> TypecheckMonad ()
+  typecheckOper :: Oper -> TCMonad ()
   typecheckOper oper = do
     (_, returnType) <- ask
     case oper of
@@ -184,22 +250,23 @@ module Typecheck (typecheck) where
         when (returnType /= t) $ lift $ Errors.badRetType expr t returnType
       VRet -> when (returnType /= Void) $ lift $ Errors.vRetNoVoid returnType
       FnExec ident args -> checkFunExec ident args
+      Print expr -> return ()
+      Assert bExpr -> typecheckBExpr bExpr
     return ()
 
-  checkRelOp :: Expr -> RelOp -> Expr -> TypecheckMonad ()
-  checkRelOp expr1 relOp expr2 = do
-    _ <- checkBinOp expr1 expr2
-    return ()
+  checkRelOp :: Expr -> RelOp -> Expr -> TCMonad ()
+  checkRelOp expr1 relOp expr2 =
+    void $ checkBinOp expr1 expr2
 
-  typecheckBExpr :: Expr -> TypecheckMonad ()
+  typecheckBExpr :: Expr -> TCMonad ()
   typecheckBExpr bExpr = do
     t <- typeOf bExpr
     case t of
       Bool -> return ()
       _ -> lift $ Errors.nonBoolean bExpr
 
-  typecheckIfStmt :: IfStmt -> TypecheckMonad ()
-  typecheckIfStmt ifStmt = do
+  typecheckIfStmt :: IfStmt -> TCMonad ()
+  typecheckIfStmt ifStmt =
     case ifStmt of
       IfStmt expr block -> do
         typecheckBExpr expr
@@ -208,26 +275,37 @@ module Typecheck (typecheck) where
         typecheckBExpr expr
         typecheckBlock block
         typecheckIfStmt nextIf
-    -- lift $ print ifStmt
-    return ()
 
-  typecheckStmt :: Stmt -> TypecheckMonad ()
-  typecheckStmt stmt = do
-    -- env <- ask
-    -- state <- get
+  typecheckIfElseStmt :: IfElseStmt -> TCMonad ()
+  typecheckIfElseStmt (IfElseStmt ifStmt block) = do
+    typecheckIfStmt ifStmt
+    typecheckBlock block
+
+  typecheckStmt :: Stmt -> TCMonad ()
+  typecheckStmt stmt =
     case stmt of
+      BStmt block -> typecheckBlock block
       OperStmt o -> typecheckOper o
+      While bExpr block -> do
+        typecheckBExpr bExpr
+        typecheckBlock block
+      For o1 b o2 block -> do
+        typecheckOper o1
+        typecheckBExpr b
+        typecheckOper o2
+        typecheckBlock block
+      Foreach ident iter block -> do
+        checkIterableExpr iter
+        elemType <- iterableElemType iter
+        typecheckDecl (NoInit ident) elemType
+        typecheckBlock block
+      Loop block -> typecheckBlock block
       CondIf i -> typecheckIfStmt i
-      _ -> return ()
-    -- lift $ print env
-    -- lift $ print state
-    -- lift $ print stmt
-    return ()
+      ElseStmt i -> typecheckIfElseStmt i
 
-  typecheckBlock :: Block -> TypecheckMonad ()
-  typecheckBlock (Block stmts) = do
+  typecheckBlock :: Block -> TCMonad ()
+  typecheckBlock (Block stmts) =
     forM_ stmts typecheckStmt
-    return ()
 
   addFunctionArgToState :: TCState -> Arg -> IO TCState
   addFunctionArgToState state (Arg t arg) = do
@@ -235,14 +313,12 @@ module Typecheck (typecheck) where
     return $ Map.insert arg (False, t) state
 
   typecheckFunction :: FnDef -> TypedFnDefs -> IO ()
-  typecheckFunction (FnDef outputType ident args body) typed = do
+  typecheckFunction (FnDef outType ident args body) typed = do
     funState <- foldM addFunctionArgToState Map.empty args
-    runRWST (typecheckBlock body) (typed, outputType) funState
-    return ()
+    void $ runRWST (typecheckBlock body) (typed, outType) funState
 
   typecheck :: Program -> IO ()
   typecheck (Program fns) = do
     typedFns <- foldM addTypedFnDef Map.empty fns
     checkMain typedFns
     forM_ fns (`typecheckFunction` typedFns)
-    return ()

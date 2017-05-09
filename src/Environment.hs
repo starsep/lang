@@ -9,7 +9,3 @@ module Environment where
   -- type VarEnvironment = Map.Map String Variable
   -- type FnEnviroment = (String)
   -- type Environment = (VarEnvironment, FnEnviroment)
-  type TypedFnDefs = Map.Map Ident Type
-  type TCEnv = (TypedFnDefs, Type)
-  type TCState = Map.Map Ident (Bool, Type)
-  type TypecheckMonad = RWST TCEnv () TCState IO
