@@ -1,12 +1,14 @@
-BINARIES=interpreter TestStarsepLang
 BUILD=build
 SHELL=/usr/bin/env bash
+GHC=ghc
+TMP=tmp
+
+BINARIES=interpreter TestStarsepLang
 SOURCES=Environment.hs Errors.hs Interpreter.hs Main.hs Typecheck.hs
 LINKED_SOURCES=$(addprefix $(BUILD)/,$(SOURCES))
 BNFC_SOURCES_FILES=AbsStarsepLang.hs ErrM.hs LexStarsepLang.hs \
 	ParStarsepLang.hs PrintStarsepLang.hs SkelStarsepLang.hs TestStarsepLang.hs
 BNFC_SOURCES=$(addprefix $(BUILD)/,$(BNFC_SOURCES_FILES))
-GHC=ghc
 
 .PHONY: all clean docs test testGood testBad testWarn run runWarn runBad runGood
 
@@ -77,8 +79,8 @@ $(BUILD)/DocStarsepLang.tex: $(BUILD)/DocStarsepLang.txt
 	txt2tags -t tex -o $@ $<
 
 docs/DocStarsepLang.pdf: $(BUILD)/DocStarsepLang.tex
-	latexmk -pdf -pdflatex="pdflatex -interaction=nonstopmode" -use-make -outdir=tmp $< && \
-	mv tmp/DocStarsepLang.pdf $@
+	latexmk -pdf -pdflatex="pdflatex -interaction=nonstopmode" -use-make -outdir=$(TMP) $< && \
+	mv $(TMP)/DocStarsepLang.pdf $@
 
 clean:
-	rm -rf $(BUILD) tmp $(BINARIES)
+	rm -rf $(BUILD) $(TMP) $(BINARIES)
