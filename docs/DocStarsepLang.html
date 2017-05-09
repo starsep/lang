@@ -29,6 +29,10 @@ reserved words excluded.
 Integer literals <I>Integer</I> are nonempty sequences of digits.
 </P>
 <P>
+Character literals <I>Char</I> have the form
+<CODE>'</CODE><I>c</I><CODE>'</CODE>, where <I>c</I> is any single character.
+</P>
+<P>
 Double-precision float literals <I>Double</I> have the structure
 indicated by the regular expression <CODE>digit+ '.' digit+ ('e' ('-')? digit+)?</CODE> i.e.\
 two sequences of digits separated by a decimal point, optionally
@@ -52,31 +56,37 @@ The reserved words used in StarsepLang are the following:
 <TABLE ALIGN="center" CELLPADDING="4">
 <TR>
 <TD><CODE>Fn</CODE></TD>
+<TD><CODE>assert</CODE></TD>
 <TD><CODE>bool</CODE></TD>
+<TD><CODE>char</CODE></TD>
+</TR>
+<TR>
 <TD><CODE>elif</CODE></TD>
 <TD><CODE>else</CODE></TD>
-</TR>
-<TR>
 <TD><CODE>false</CODE></TD>
 <TD><CODE>float</CODE></TD>
+</TR>
+<TR>
 <TD><CODE>for</CODE></TD>
 <TD><CODE>if</CODE></TD>
-</TR>
-<TR>
 <TD><CODE>in</CODE></TD>
 <TD><CODE>int</CODE></TD>
-<TD><CODE>let</CODE></TD>
-<TD><CODE>loop</CODE></TD>
 </TR>
 <TR>
+<TD><CODE>let</CODE></TD>
+<TD><CODE>loop</CODE></TD>
+<TD><CODE>print</CODE></TD>
 <TD><CODE>return</CODE></TD>
+</TR>
+<TR>
 <TD><CODE>string</CODE></TD>
 <TD><CODE>true</CODE></TD>
 <TD><CODE>typeof</CODE></TD>
+<TD><CODE>void</CODE></TD>
 </TR>
 <TR>
-<TD><CODE>void</CODE></TD>
 <TD><CODE>while</CODE></TD>
+<TD></TD>
 <TD></TD>
 </TR>
 </TABLE>
@@ -287,6 +297,16 @@ All other symbols are terminals.
 <TD><I>Ident</I> <CODE>(</CODE> <I>[Expr]</I> <CODE>)</CODE></TD>
 </TR>
 <TR>
+<TD></TD>
+<TD ALIGN="center"><B>|</B></TD>
+<TD><CODE>print</CODE> <CODE>(</CODE> <I>Expr</I> <CODE>)</CODE></TD>
+</TR>
+<TR>
+<TD></TD>
+<TD ALIGN="center"><B>|</B></TD>
+<TD><CODE>assert</CODE> <CODE>(</CODE> <I>Expr</I> <CODE>)</CODE></TD>
+</TR>
+<TR>
 <TD><I>Item</I></TD>
 <TD>-&gt;</TD>
 <TD><I>Ident</I></TD>
@@ -329,6 +349,11 @@ All other symbols are terminals.
 <TR>
 <TD></TD>
 <TD ALIGN="center"><B>|</B></TD>
+<TD><CODE>char</CODE></TD>
+</TR>
+<TR>
+<TD></TD>
+<TD ALIGN="center"><B>|</B></TD>
 <TD><CODE>string</CODE></TD>
 </TR>
 <TR>
@@ -354,12 +379,7 @@ All other symbols are terminals.
 <TR>
 <TD></TD>
 <TD ALIGN="center"><B>|</B></TD>
-<TD><CODE>Fn</CODE> <CODE>&lt;</CODE> <I>Type</I> <CODE>&gt;</CODE></TD>
-</TR>
-<TR>
-<TD></TD>
-<TD ALIGN="center"><B>|</B></TD>
-<TD><CODE>Fn</CODE> <CODE>&lt;</CODE> <I>[Type]</I> <CODE>-&gt;</CODE> <I>Type</I> <CODE>&gt;</CODE></TD>
+<TD><CODE>Fn</CODE> <CODE>&lt;</CODE> <I>[Type]</I> <CODE>&gt;</CODE></TD>
 </TR>
 <TR>
 <TD><I>[Type]</I></TD>
@@ -369,7 +389,7 @@ All other symbols are terminals.
 <TR>
 <TD></TD>
 <TD ALIGN="center"><B>|</B></TD>
-<TD><I>Type</I> <CODE>,</CODE> <I>[Type]</I></TD>
+<TD><I>Type</I> <CODE>-&gt;</CODE> <I>[Type]</I></TD>
 </TR>
 <TR>
 <TD><I>Expr8</I></TD>
@@ -390,6 +410,11 @@ All other symbols are terminals.
 <TD></TD>
 <TD ALIGN="center"><B>|</B></TD>
 <TD><I>Integer</I></TD>
+</TR>
+<TR>
+<TD></TD>
+<TD ALIGN="center"><B>|</B></TD>
+<TD><I>Char</I></TD>
 </TR>
 <TR>
 <TD></TD>
@@ -494,7 +519,7 @@ All other symbols are terminals.
 <TR>
 <TD></TD>
 <TD ALIGN="center"><B>|</B></TD>
-<TD><CODE>@</CODE> <CODE>(</CODE> <I>[Ident]</I> <CODE>)</CODE> <CODE>-&gt;</CODE> <I>Expr</I></TD>
+<TD><CODE>@</CODE> <CODE>(</CODE> <I>[Arg]</I> <CODE>)</CODE> <CODE>-&gt;</CODE> <I>Expr</I></TD>
 </TR>
 <TR>
 <TD><I>[Expr]</I></TD>
@@ -510,21 +535,6 @@ All other symbols are terminals.
 <TD></TD>
 <TD ALIGN="center"><B>|</B></TD>
 <TD><I>Expr</I> <CODE>,</CODE> <I>[Expr]</I></TD>
-</TR>
-<TR>
-<TD><I>[Ident]</I></TD>
-<TD>-&gt;</TD>
-<TD><B>eps</B></TD>
-</TR>
-<TR>
-<TD></TD>
-<TD ALIGN="center"><B>|</B></TD>
-<TD><I>Ident</I></TD>
-</TR>
-<TR>
-<TD></TD>
-<TD ALIGN="center"><B>|</B></TD>
-<TD><I>Ident</I> <CODE>,</CODE> <I>[Ident]</I></TD>
 </TR>
 <TR>
 <TD><I>AddOp</I></TD>
