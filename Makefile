@@ -1,8 +1,14 @@
 BINARIES=interpreter TestStarsepLang
+BUILD=build
 SHELL=/usr/bin/env bash
-SOURCES=src/Interpreter.hs src/Main.hs src/Environment.hs src/Typecheck.hs src/Errors.hs
+SOURCES=Environment.hs Errors.hs Interpreter.hs Main.hs Typecheck.hs
+LINKED_SOURCES=$(addprefix $(BUILD)/,$(SOURCES))
+BNFC_SOURCES_FILES=AbsStarsepLang.hs ErrM.hs LexStarsepLang.hs \
+	ParStarsepLang.hs PrintStarsepLang.hs SkelStarsepLang.hs TestStarsepLang.hs
+BNFC_SOURCES=$(addprefix $(BUILD)/,$(BNFC_SOURCES_FILES))
+GHC=ghc
 
-.PHONY: all clean build docs test testGood testBad testWarn run runWarn runBad runGood linkSources
+.PHONY: all clean docs test testGood testBad testWarn run runWarn runBad runGood
 
 all: $(BINARIES)
 
@@ -19,7 +25,7 @@ testGood: good TestStarsepLang
 	$(call test_examples,$<)
 
 testBad: bad TestStarsepLang
-	$(call test_examples,$<)
+	-$(call test_examples,$<)
 
 testWarn: warn TestStarsepLang
 	$(call test_examples,$<)
@@ -37,44 +43,42 @@ runGood: good interpreter
 	$(call run_examples,$<)
 
 runBad: bad interpreter
-	$(call run_examples,$<)
+	-$(call run_examples,$<)
 
 runWarn: warn interpreter
 	$(call run_examples,$<)
 
-TestStarsepLang: build
-	cd $< && \
+TestStarsepLang: $(BNFC_SOURCES)
+	cd $(BUILD) && \
+	$(GHC) --make TestStarsepLang.hs -o ../$@
+
+$(LINKED_SOURCES): $(BUILD)/%: src/%
+	ln -srf $^ $(BUILD)
+
+$(BNFC_SOURCES): grammar/StarsepLang.cf
+	mkdir -p $(BUILD) && \
+	cd $(BUILD) && \
+	bnfc -haskell ../$< && \
 	happy -gca ParStarsepLang.y && \
-	alex -g LexStarsepLang.x && \
-	ghc --make TestStarsepLang.hs -o ../$@
+	alex -g LexStarsepLang.x
 
-linkSources: $(SOURCES)
-	ln -srf $^ build
-
-interpreter: TestStarsepLang linkSources
-	cd build && \
-	ghc --make Main.hs -o ../$@
-
-build/SkelStarsepLang.hs: build
-
-build: grammar/StarsepLang.cf
-	mkdir -p $@ && \
-	cd $@ && \
-	bnfc -haskell ../$<
+interpreter: $(BNFC_SOURCES) $(LINKED_SOURCES)
+	cd $(BUILD) && \
+	$(GHC) --make Main.hs -o ../$@
 
 docs: docs/DocStarsepLang.html docs/DocStarsepLang.pdf
 
-build/DocStarsepLang.txt: build
+$(BUILD)/DocStarsepLang.txt: $(BNFC_SOURCES)
 
-docs/DocStarsepLang.html: build/DocStarsepLang.txt
+docs/DocStarsepLang.html: $(BUILD)/DocStarsepLang.txt
 	txt2tags -t html -o $@ $<
 
-build/DocStarsepLang.tex: build/DocStarsepLang.txt
+$(BUILD)/DocStarsepLang.tex: $(BUILD)/DocStarsepLang.txt
 	txt2tags -t tex -o $@ $<
 
-docs/DocStarsepLang.pdf: build/DocStarsepLang.tex
+docs/DocStarsepLang.pdf: $(BUILD)/DocStarsepLang.tex
 	latexmk -pdf -pdflatex="pdflatex -interaction=nonstopmode" -use-make -outdir=tmp $< && \
 	mv tmp/DocStarsepLang.pdf $@
 
 clean:
-	rm -rf build tmp $(BINARIES)
+	rm -rf $(BUILD) tmp $(BINARIES)
