@@ -1,18 +1,24 @@
-module Interpreter where
+module Interpreter (interpret) where
 
 import AbsStarsepLang
-import ErrM
-type Result = Err String
+
+type Result = IO ()
 
 failure :: Show a => a -> Result
-failure x = Bad $ "Undefined case: " ++ show x
+failure x = fail $ "Undefined case: " ++ show x
+
+isMain :: FnDef -> Bool
+isMain (FnDef _ (Ident name) _ _) = name == "main"
+
+interpret :: Program -> IO ()
+interpret (Program fns) = do
+  let main = head $ filter isMain fns
+  _ <- transFnDef main
+  print main
 
 transIdent :: Ident -> Result
 transIdent x = case x of
   Ident string -> failure x
-transProgram :: Program -> Result
-transProgram x = case x of
-  Program fndefs -> failure x
 transFnDef :: FnDef -> Result
 transFnDef x = case x of
   FnDef type_ ident args block -> failure x
@@ -116,4 +122,3 @@ transAssOp x = case x of
   MulAss -> failure x
   DivAss -> failure x
   ModAss -> failure x
-

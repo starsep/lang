@@ -1,11 +1,12 @@
 BUILD=build
 SHELL=/usr/bin/env bash
-GHCFLAGS=-Wall
+GHCFLAGS= #-Wall
 GHC=ghc
 TMP=tmp
+ARGS=
 
-BINARIES=TestStarsepLang interpreter 
-SOURCES=Environment.hs Errors.hs Interpreter.hs Main.hs Typecheck.hs
+BINARIES=TestStarsepLang interpreter
+SOURCES=Debug.hs Environment.hs Errors.hs Interpreter.hs Main.hs Typecheck.hs
 LINKED_SOURCES=$(addprefix $(BUILD)/,$(SOURCES))
 BNFC_SOURCES_FILES=AbsStarsepLang.hs ErrM.hs LexStarsepLang.hs \
 	ParStarsepLang.hs PrintStarsepLang.hs TestStarsepLang.hs
@@ -36,7 +37,7 @@ testWarn: warn TestStarsepLang
 define run_examples
 	@for e in $1/* ; do \
 		echo -e "\e[93m----------- RUNNING\e[96m $$e \e[93m--------------\e[0m"; \
-		./interpreter < "$$e" ; \
+		./interpreter $(ARGS) "$$e" ; \
 	done
 endef
 
@@ -64,10 +65,6 @@ $(BNFC_SOURCES): grammar/StarsepLang.cf
 	bnfc -haskell ../$< && \
 	happy -gca ParStarsepLang.y && \
 	alex -g LexStarsepLang.x
-
-	echo "module Interpreter where" > src/Interpreter.hs && \
-	tail -n+4 $(BUILD)/SkelStarsepLang.hs >> src/Interpreter.hs
-
 	rm -f $(BUILD)/SkelStarsepLang.hs && \
 	sed -i "/SkelStarsepLang/d" $(BUILD)/TestStarsepLang.hs
 
