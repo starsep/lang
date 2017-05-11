@@ -14,7 +14,7 @@ module Typecheck (typecheck) where
   typeOf :: Expr -> TCMonad Type
   typeOf expr =
     case expr of
-      EFun ident exprs -> outputType ident exprs
+      EFun (FunExec ident exprs) -> outputType ident exprs
       EVar ident -> typeOfIdent ident
       EInt _ -> return Int
       EChar _ -> return Char
@@ -24,7 +24,7 @@ module Typecheck (typecheck) where
       ETrue -> return Bool
       ENeg expr -> checkNeg expr
       ENot expr -> do
-        typecheckBExpr expr
+        assertBExpr expr
         return Bool
       EAdd e1 addOp e2 -> checkAddOp e1 addOp e2
       EMul e1 mulOp e2 -> checkMulOp e1 mulOp e2
@@ -34,7 +34,7 @@ module Typecheck (typecheck) where
       EOr b1 b2 -> checkBExprOp b1 b2
       EAnd b1 b2 -> checkBExprOp b1 b2
       ETernary b e1 e2 -> do
-        typecheckBExpr b
+        assertBExpr b
         checkRelOp e1 EQU e2
         typeOf e1
       Lambda args expr -> typeOfLambda args expr
@@ -47,7 +47,7 @@ module Typecheck (typecheck) where
   typeOfVar :: Ident -> TCMonad Type
   typeOfVar ident = do
     state <- get
-    checkVarDeclared ident
+    assertVarDeclared ident
     let Just (_, t) = Map.lookup ident state
     return t
 
@@ -70,8 +70,8 @@ module Typecheck (typecheck) where
 
   checkBExprOp :: Expr -> Expr -> TCMonad Type
   checkBExprOp b1 b2 = do
-    typecheckBExpr b1
-    typecheckBExpr b2
+    assertBExpr b1
+    assertBExpr b2
     return Bool
 
   checkBinOp :: Expr -> Expr -> TCMonad Type
@@ -81,16 +81,16 @@ module Typecheck (typecheck) where
     unless (t1 == t2) $ lift $ Errors.diffTypesBinOp t1 t2
     return t1
 
-  checkNumericExpr :: Expr -> TCMonad ()
-  checkNumericExpr expr = do
+  assertNumericExpr :: Expr -> TCMonad ()
+  assertNumericExpr expr = do
     t <- typeOf expr
     case t of
       Int -> return ()
       Float -> return ()
       _ -> lift $ Errors.nonNumeric expr t
 
-  checkIterableExpr :: Expr -> TCMonad ()
-  checkIterableExpr expr = do
+  assertIterableExpr :: Expr -> TCMonad ()
+  assertIterableExpr expr = do
     t <- typeOf expr
     case t of
       Str -> return ()
@@ -104,7 +104,7 @@ module Typecheck (typecheck) where
 
   checkNeg :: Expr -> TCMonad Type
   checkNeg expr = do
-    checkNumericExpr expr
+    assertNumericExpr expr
     typeOf expr
 
   checkAddOp :: Expr -> AddOp -> Expr -> TCMonad Type
@@ -112,9 +112,6 @@ module Typecheck (typecheck) where
 
   checkMulOp :: Expr -> MulOp -> Expr -> TCMonad Type
   checkMulOp expr1 mulOp expr2 = checkBinOp expr1 expr2
-
-  checkFunExec :: Ident -> [Expr] -> TCMonad ()
-  checkFunExec ident args = return ()
 
   checkArgs :: Ident -> [Expr] -> [Type] -> TCMonad Type
   checkArgs ident args t = do
@@ -163,8 +160,8 @@ module Typecheck (typecheck) where
     when (Map.member ident typed) $ Errors.multipleFnDef ident
     return $ Map.insert ident (fnHeaderToFnType outType args) typed
 
-  checkMain :: TypedFnDefs -> IO ()
-  checkMain typedFns = do
+  assertCorrectMain :: TypedFnDefs -> IO ()
+  assertCorrectMain typedFns = do
     when (Map.notMember (Ident "main") typedFns) Errors.noMain
     case Map.lookup (Ident "main") typedFns of
       Just (FnType [Void]) -> return ()
@@ -177,20 +174,20 @@ module Typecheck (typecheck) where
     when (Map.member ident typed) $ lift $ Errors.shadowTopDef ident
     when (Map.member ident state) $ lift $ Errors.shadowVariable ident
 
-  checkType :: Expr -> Type -> TCMonad ()
-  checkType expr t = do
+  assertType :: Expr -> Type -> TCMonad ()
+  assertType expr t = do
     typeof <- typeOf expr
     when (t /= typeof) $ lift $ Errors.expectedExpression expr typeof t
 
-  checkVarDeclared :: Ident -> TCMonad ()
-  checkVarDeclared ident = do
+  assertVarDeclared :: Ident -> TCMonad ()
+  assertVarDeclared ident = do
     state <- get
     when (Map.notMember ident state) $ lift $ Errors.variableUndeclared ident
 
-  checkNonConst :: Ident -> TCMonad ()
-  checkNonConst ident = do
+  assertNonConst :: Ident -> TCMonad ()
+  assertNonConst ident = do
     state <- get
-    checkVarDeclared ident
+    assertVarDeclared ident
     let Just (isConst, _) = Map.lookup ident state
     when isConst $ lift $ Errors.changingConst ident
 
@@ -205,14 +202,14 @@ module Typecheck (typecheck) where
       NoInit ident -> checkShadow ident
       Init ident expr -> do
         checkShadow ident
-        checkType expr t
+        assertType expr t
     state <- get
     put (Map.insert (itemIdent item) (False, t) state)
 
   typecheckIncr :: Ident -> TCMonad ()
   typecheckIncr ident = do
-    checkVarDeclared ident
-    checkType (EVar ident) Int
+    assertVarDeclared ident
+    assertType (EVar ident) Int
 
   typecheckLet :: Item -> Type -> TCMonad ()
   typecheckLet item expectedT = do
@@ -220,7 +217,7 @@ module Typecheck (typecheck) where
     let ident = itemIdent item
     when (item == NoInit ident) $ lift $ Errors.letNoInit ident
     let (Init _ expr) = item
-    checkType expr expectedT
+    assertType expr expectedT
     put (Map.insert ident (True, expectedT) state)
 
   typecheckLets :: [Item] -> TCMonad ()
@@ -233,7 +230,7 @@ module Typecheck (typecheck) where
     forM_ items (`typecheckLet` expectedT)
 
   typecheckAss :: Ident -> AssOp -> Expr -> TCMonad ()
-  typecheckAss ident assOp expr = checkNonConst ident
+  typecheckAss ident assOp expr = assertNonConst ident
 
   typecheckOper :: Oper -> TCMonad ()
   typecheckOper oper = do
@@ -249,17 +246,17 @@ module Typecheck (typecheck) where
         t <- typeOf expr
         when (returnType /= t) $ lift $ Errors.badRetType expr t returnType
       VRet -> when (returnType /= Void) $ lift $ Errors.vRetNoVoid returnType
-      FnExec ident args -> checkFunExec ident args
+      FnExec (FunExec ident args) -> void $ outputType ident args
       Print expr -> return ()
-      Assert bExpr -> typecheckBExpr bExpr
+      Assert bExpr -> assertBExpr bExpr
     return ()
 
   checkRelOp :: Expr -> RelOp -> Expr -> TCMonad ()
   checkRelOp expr1 relOp expr2 =
     void $ checkBinOp expr1 expr2
 
-  typecheckBExpr :: Expr -> TCMonad ()
-  typecheckBExpr bExpr = do
+  assertBExpr :: Expr -> TCMonad ()
+  assertBExpr bExpr = do
     t <- typeOf bExpr
     case t of
       Bool -> return ()
@@ -269,10 +266,10 @@ module Typecheck (typecheck) where
   typecheckIfStmt ifStmt =
     case ifStmt of
       IfStmt expr block -> do
-        typecheckBExpr expr
+        assertBExpr expr
         typecheckBlock block
       IfElifStmt nextIf expr block -> do
-        typecheckBExpr expr
+        assertBExpr expr
         typecheckBlock block
         typecheckIfStmt nextIf
 
@@ -287,15 +284,15 @@ module Typecheck (typecheck) where
       BStmt block -> typecheckBlock block
       OperStmt o -> typecheckOper o
       While bExpr block -> do
-        typecheckBExpr bExpr
+        assertBExpr bExpr
         typecheckBlock block
       For o1 b o2 block -> do
         typecheckOper o1
-        typecheckBExpr b
+        assertBExpr b
         typecheckOper o2
         typecheckBlock block
       Foreach ident iter block -> do
-        checkIterableExpr iter
+        assertIterableExpr iter
         elemType <- iterableElemType iter
         typecheckDecl (NoInit ident) elemType
         typecheckBlock block
@@ -320,5 +317,5 @@ module Typecheck (typecheck) where
   typecheck :: Program -> IO ()
   typecheck (Program fns) = do
     typedFns <- foldM addTypedFnDef Map.empty fns
-    checkMain typedFns
+    assertCorrectMain typedFns
     forM_ fns (`typecheckFunction` typedFns)
