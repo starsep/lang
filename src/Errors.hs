@@ -3,7 +3,8 @@ module Errors
    badRetType, expectedExpression, shadowTopDef, shadowVariable,
    variableUndeclared, noInit, changingConst, diffTypesBinOp,
    sameArgNames, nonNumeric, nonBoolean, functionUndeclared, notLambda,
-   numberOfArgs, typesOfArgs, nonIterable, nonComparable) where
+   numberOfArgs, typesOfArgs, nonIterable, nonComparable, nonPrintable,
+   listDiffJoin, nonListType) where
   import AbsStarsepLang
   import PrintStarsepLang
   import Data.Char
@@ -21,7 +22,7 @@ module Errors
   typeColor :: String
   typeColor = escapeChar : "[34;1m"
   exprColor :: String
-  exprColor = escapeChar : "[32;1m"
+  exprColor = escapeChar : "[35;1m"
 
   typeString :: Type -> String
   typeString t =
@@ -35,7 +36,7 @@ module Errors
     exprColor ++ printTree e ++ normalColor
 
   numString :: Int -> String
-  numString = show
+  numString n = exprColor ++ show n ++ normalColor
 
   identString :: Ident -> String
   identString ident = exprString $ EVar ident
@@ -60,8 +61,7 @@ module Errors
     putStrLn msg
 
   parsing :: String -> IO ()
-  parsing msg = do
-    printError $ "parsing failed, " ++ msg
+  parsing msg = printError $ "parsing failed, " ++ msg
 
   typecheck :: String -> IO ()
   typecheck msg = printError $ "typecheck failed, " ++ msg
@@ -155,3 +155,16 @@ module Errors
   nonComparable :: Expr -> Type -> IO ()
   nonComparable expr t = typecheck $ "expected iterable expression, got " ++
     exprString expr ++ " which is" ++ typeOfString t
+
+  nonPrintable :: Expr -> Type -> IO ()
+  nonPrintable expr t = typecheck $ exprString expr ++ " is not printable" ++
+    typeOfString t
+
+  listDiffJoin :: Expr -> Expr -> Type -> Type -> IO ()
+  listDiffJoin a b ta tb =
+    typecheck $ "trying to join lists of different types " ++ exprString a ++
+    typeOfString ta ++ exprString b ++ typeOfString tb
+
+  nonListType :: Expr -> Type -> IO ()
+  nonListType e t = typecheck $ "expected list type, got " ++ exprString e ++
+    typeOfString t

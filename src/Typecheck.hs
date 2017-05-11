@@ -12,9 +12,22 @@ module Typecheck (typecheck) where
   type TCMonad = RWST TCEnv () TCState IO
 
   typeOf :: Expr -> TCMonad Type
-  typeOf e =
-    case e of
+  typeOf q =
+    case q of
       EFun (FunExec ident exprs) -> outputType ident exprs
+      EList t exprs -> do
+        forM_ exprs (`assertType` t)
+        return $ ListT t
+      EJoin a b -> do
+        ta <- listType a
+        tb <- listType b
+        when (ta /= tb) $ lift $ Errors.listDiffJoin a b ta tb
+        return ta
+      EAppend e l -> do
+        t <- listType l
+        let (ListT elemType) = t
+        assertType e elemType
+        return t
       EVar ident -> typeOfIdent ident
       EInt _ -> return Int
       EChar _ -> return Char
@@ -27,7 +40,11 @@ module Typecheck (typecheck) where
         assertBExpr expr
         return Bool
       EAdd e1 _ e2 -> checkNumOp e1 e2
-      EMul e1 _ e2 -> checkNumOp e1 e2
+      EMul e1 mulOp e2 -> do
+        when (mulOp == Mod) $ do
+          assertType e1 Int
+          assertType e2 Int
+        checkNumOp e1 e2
       ERel e1 _ e2 -> do
         checkRelOp e1 e2
         return Bool
@@ -38,6 +55,16 @@ module Typecheck (typecheck) where
         checkRelOp e1 e2
         typeOf e1
       Lambda args expr -> typeOfLambda args expr
+
+
+  listType :: Expr -> TCMonad Type
+  listType expr = do
+    t <- typeOf expr
+    case t of
+      ListT _ -> return t
+      _ -> do
+        lift $ Errors.nonListType expr t
+        return t
 
   typeOfFun :: Ident -> TCMonad Type
   typeOfFun ident = do
@@ -89,18 +116,15 @@ module Typecheck (typecheck) where
       Float -> return ()
       _ -> lift $ Errors.nonNumeric expr t
 
-  assertIterableExpr :: Expr -> TCMonad ()
-  assertIterableExpr expr = do
-    t <- typeOf expr
-    case t of
-      Str -> return ()
-      _ -> lift $ Errors.nonIterable expr t
-
   iterableElemType :: Expr -> TCMonad Type
   iterableElemType expr = do
     t <- typeOf expr
     case t of
       Str -> return Char
+      ListT e -> return e
+      _ -> do
+        lift $ Errors.nonIterable expr t
+        return Int
 
   checkNeg :: Expr -> TCMonad Type
   checkNeg expr = do
@@ -226,11 +250,15 @@ module Typecheck (typecheck) where
     assertNonConst ident
     ltype <- typeOf $ EVar ident
     assertType expr ltype
+    when (assOp /= Assign) $ assertNumericExpr expr
+    when (assOp == ModAss) $ do
+      assertType (EVar ident) Int
+      assertType expr Int
 
   typecheckOper :: Oper -> TCMonad ()
   typecheckOper oper = do
     (_, returnType) <- ask
-    case oper of
+    void $ case oper of
       Decl t items -> forM_ items (`typecheckDecl` t)
       Let items -> forM_ items (`typecheckAuto` True)
       Auto items -> forM_ items (`typecheckAuto` False)
@@ -243,9 +271,16 @@ module Typecheck (typecheck) where
         when (returnType /= t) $ lift $ Errors.badRetType expr t returnType
       VRet -> when (returnType /= Void) $ lift $ Errors.vRetNoVoid returnType
       FnExec (FunExec ident args) -> void $ outputType ident args
-      Print expr -> return ()
+      Print expr -> assertPrintable expr
       Assert bExpr -> assertBExpr bExpr
-    return ()
+
+  assertPrintable :: Expr -> TCMonad ()
+  assertPrintable expr = do
+    t <- typeOf expr
+    case t of
+      Void -> lift $ Errors.nonPrintable expr t
+      FnType _ -> lift $ Errors.nonPrintable expr t
+      _ -> return ()
 
   assertComparable :: Expr -> TCMonad ()
   assertComparable expr = do
@@ -255,7 +290,8 @@ module Typecheck (typecheck) where
       _ -> return ()
 
   checkRelOp :: Expr -> Expr -> TCMonad ()
-  checkRelOp expr1 expr2 =
+  checkRelOp expr1 expr2 = do
+    assertComparable expr1
     void $ checkBinOp expr1 expr2
 
   assertBExpr :: Expr -> TCMonad ()
@@ -295,7 +331,6 @@ module Typecheck (typecheck) where
         typecheckOper o2
         typecheckBlock block
       Foreach ident iter block -> do
-        assertIterableExpr iter
         elemType <- iterableElemType iter
         typecheckDecl (NoInit ident) elemType
         typecheckBlock block
@@ -313,7 +348,7 @@ module Typecheck (typecheck) where
     return $ Map.insert arg (False, t) state
 
   typecheckFunction :: FnDef -> TypedFnDefs -> IO ()
-  typecheckFunction (FnDef outType ident args body) typed = do
+  typecheckFunction (FnDef outType _ args body) typed = do
     funState <- foldM addFunctionArgToState Map.empty args
     void $ runRWST (typecheckBlock body) (typed, outType) funState
 

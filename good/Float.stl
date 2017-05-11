@@ -1,6 +1,6 @@
 void main() {
     let x = 24.2;
     let y = 17.8;
-    print(toInt(x + y));
+    print(x + y);
     // Should print 42.0
 }

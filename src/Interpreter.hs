@@ -68,9 +68,11 @@ transType x = case x of
   Float -> failure x
   Void -> failure x
   FnType types -> failure x
+  ListT type_ -> failure x
 transExpr :: Expr -> Result
 transExpr x = case x of
   EFun funexec -> failure x
+  EList type_ exprs -> failure x
   EVar ident -> failure x
   EInt integer -> failure x
   EChar char -> failure x
@@ -82,6 +84,8 @@ transExpr x = case x of
   ENot expr -> failure x
   EMul expr1 mulop expr2 -> failure x
   EAdd expr1 addop expr2 -> failure x
+  EJoin expr1 expr2 -> failure x
+  EAppend expr1 expr2 -> failure x
   ERel expr1 relop expr2 -> failure x
   EAnd expr1 expr2 -> failure x
   EOr expr1 expr2 -> failure x

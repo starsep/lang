@@ -1,0 +1,6 @@
+void main() {
+    list<int> x = int[];
+    let y = x ++ x;
+    let a = int[1, 2, 3];
+    let b = 4 $ a;
+}
