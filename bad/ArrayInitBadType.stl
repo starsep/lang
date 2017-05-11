@@ -1,0 +1,3 @@
+void main() {
+    array<float> x = array[int, 3];
+}

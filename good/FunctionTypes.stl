@@ -7,8 +7,8 @@ int foo3() { return 42; }
 int foo4(int x, int y) { return x + y; }
 
 void main() {
-    Fn<void> bar1 = foo1;
-    Fn<int -> void> bar2 = foo2;
-    Fn<int> bar3 = foo3;
-    Fn<int -> int -> int> bar4 = foo4;
+    fn<void> bar1 = foo1;
+    fn<int -> void> bar2 = foo2;
+    fn<int> bar3 = foo3;
+    fn<int -> int -> int> bar4 = foo4;
 }

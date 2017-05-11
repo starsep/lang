@@ -1,0 +1,3 @@
+void main() {
+    array<int> x = 42;
+}

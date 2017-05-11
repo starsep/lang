@@ -1,4 +1,4 @@
 void main() {
-    Fn<int> x = @() -> 42;
+    fn<int> x = @() -> 42;
     print(x());
 }
