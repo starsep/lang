@@ -1,3 +1,0 @@
-void main() {
-    array<int> a = array[int, 5];
-}

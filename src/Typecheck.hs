@@ -15,9 +15,6 @@ module Typecheck (typecheck) where
   typeOf expr =
     case expr of
       EFun (FunExec ident exprs) -> outputType ident exprs
-      EArrayInit t e -> do
-        assertType e Int
-        return $ Array t 
       EVar ident -> typeOfIdent ident
       EInt _ -> return Int
       EChar _ -> return Char

@@ -69,12 +69,9 @@ transType x = case x of
   Void -> failure x
   TypeOf expr -> failure x
   FnType types -> failure x
-  Array type_ -> failure x
 transExpr :: Expr -> Result
 transExpr x = case x of
   EFun funexec -> failure x
-  EArrayInit type_ expr -> failure x
-  EArray exprs -> failure x
   EVar ident -> failure x
   EInt integer -> failure x
   EChar char -> failure x
