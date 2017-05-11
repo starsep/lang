@@ -1,13 +1,14 @@
 BUILD=build
 SHELL=/usr/bin/env bash
-GHC=ghc
+GHCFLAGS=-Wall
+GHC=ghc $(GHCFLAGS)
 TMP=tmp
 
 BINARIES=interpreter TestStarsepLang
 SOURCES=Environment.hs Errors.hs Interpreter.hs Main.hs Typecheck.hs
 LINKED_SOURCES=$(addprefix $(BUILD)/,$(SOURCES))
 BNFC_SOURCES_FILES=AbsStarsepLang.hs ErrM.hs LexStarsepLang.hs \
-	ParStarsepLang.hs PrintStarsepLang.hs SkelStarsepLang.hs TestStarsepLang.hs
+	ParStarsepLang.hs PrintStarsepLang.hs TestStarsepLang.hs
 BNFC_SOURCES=$(addprefix $(BUILD)/,$(BNFC_SOURCES_FILES))
 
 .PHONY: all clean docs test testGood testBad testWarn run runWarn runBad runGood
@@ -63,8 +64,12 @@ $(BNFC_SOURCES): grammar/StarsepLang.cf
 	bnfc -haskell ../$< && \
 	happy -gca ParStarsepLang.y && \
 	alex -g LexStarsepLang.x
+
 	echo "module Interpreter where" > src/Interpreter.hs && \
 	tail -n+4 $(BUILD)/SkelStarsepLang.hs >> src/Interpreter.hs
+
+	rm -f $(BUILD)/SkelStarsepLang.hs && \
+	sed -i "/SkelStarsepLang/d" $(BUILD)/TestStarsepLang.hs
 
 interpreter: $(BNFC_SOURCES) $(LINKED_SOURCES)
 	cd $(BUILD) && \
