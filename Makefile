@@ -63,6 +63,8 @@ $(BNFC_SOURCES): grammar/StarsepLang.cf
 	bnfc -haskell ../$< && \
 	happy -gca ParStarsepLang.y && \
 	alex -g LexStarsepLang.x
+	echo "module Interpreter where" > src/Interpreter.hs && \
+	tail -n+4 $(BUILD)/SkelStarsepLang.hs >> src/Interpreter.hs
 
 interpreter: $(BNFC_SOURCES) $(LINKED_SOURCES)
 	cd $(BUILD) && \
