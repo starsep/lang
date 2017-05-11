@@ -8,6 +8,9 @@ separator nonempty FnDef "" ;
 
 Arg.          Arg ::= Type Ident ;
 separator Arg "," ;
+-- Function Execution -------------------------------------------------
+
+FunExec.      FunExec ::= Ident "(" [Expr] ")" ;
 
 -- Statements ----------------------------------------------
 
@@ -26,7 +29,7 @@ Incr.         Oper ::= Ident "++" ;
 Decr.         Oper ::= Ident "--" ;
 Ret.          Oper ::= "return" Expr ;
 VRet.         Oper ::= "return" ;
-FnExec.       Oper ::= Ident "(" [Expr] ")" ;
+FnExec.       Oper ::= FunExec ;
 Print.        Oper ::= "print" "(" Expr ")" ;
 Assert.       Oper ::= "assert" "(" Expr ")" ;
 
@@ -57,7 +60,7 @@ separator nonempty Type "->" ;
 
 -- Expressions ---------------------------------------------
 
-EFun.         Expr8 ::= Ident "(" [Expr] ")" ;
+EFun.         Expr8 ::= FunExec ;
 EVar.         Expr7 ::= Ident ;
 EInt.         Expr7 ::= Integer ;
 EChar.        Expr7 ::= Char ;

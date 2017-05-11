@@ -19,6 +19,9 @@ transFnDef x = case x of
 transArg :: Arg -> Result
 transArg x = case x of
   Arg type_ ident -> failure x
+transFunExec :: FunExec -> Result
+transFunExec x = case x of
+  FunExec ident exprs -> failure x
 transBlock :: Block -> Result
 transBlock x = case x of
   Block stmts -> failure x
@@ -41,7 +44,9 @@ transOper x = case x of
   Decr ident -> failure x
   Ret expr -> failure x
   VRet -> failure x
-  FnExec ident exprs -> failure x
+  FnExec funexec -> failure x
+  Print expr -> failure x
+  Assert expr -> failure x
 transItem :: Item -> Result
 transItem x = case x of
   NoInit ident -> failure x
@@ -56,6 +61,7 @@ transIfElseStmt x = case x of
 transType :: Type -> Result
 transType x = case x of
   Int -> failure x
+  Char -> failure x
   Str -> failure x
   Bool -> failure x
   Float -> failure x
@@ -64,9 +70,10 @@ transType x = case x of
   FnType types -> failure x
 transExpr :: Expr -> Result
 transExpr x = case x of
-  EFun ident exprs -> failure x
+  EFun funexec -> failure x
   EVar ident -> failure x
   EInt integer -> failure x
+  EChar char -> failure x
   EFloat double -> failure x
   EString string -> failure x
   EFalse -> failure x
@@ -79,7 +86,7 @@ transExpr x = case x of
   EAnd expr1 expr2 -> failure x
   EOr expr1 expr2 -> failure x
   ETernary expr1 expr2 expr3 -> failure x
-  Lambda idents expr -> failure x
+  Lambda args expr -> failure x
 transAddOp :: AddOp -> Result
 transAddOp x = case x of
   Plus -> failure x
@@ -105,3 +112,4 @@ transAssOp x = case x of
   MulAss -> failure x
   DivAss -> failure x
   ModAss -> failure x
+
