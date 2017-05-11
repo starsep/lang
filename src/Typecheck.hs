@@ -15,6 +15,9 @@ module Typecheck (typecheck) where
   typeOf expr =
     case expr of
       EFun (FunExec ident exprs) -> outputType ident exprs
+      EArrayInit t e -> do
+        assertType e Int
+        return $ Array t 
       EVar ident -> typeOfIdent ident
       EInt _ -> return Int
       EChar _ -> return Char
@@ -121,7 +124,7 @@ module Typecheck (typecheck) where
     argsTypes <- mapM typeOf args
     let types = take expected t
     when (argsTypes /= types) $ lift $ Errors.typesOfArgs ident argsTypes types
-    return $ last types
+    return $ last t
 
   outputTypeLambda :: Ident -> [Expr] -> TCMonad Type
   outputTypeLambda ident args = do
@@ -211,23 +214,15 @@ module Typecheck (typecheck) where
     assertVarDeclared ident
     assertType (EVar ident) Int
 
-  typecheckLet :: Item -> Type -> TCMonad ()
-  typecheckLet item expectedT = do
+  typecheckAuto :: Item -> Bool -> TCMonad()
+  typecheckAuto item isConst = do
     state <- get
     let ident = itemIdent item
-    when (item == NoInit ident) $ lift $ Errors.letNoInit ident
+    checkShadow ident
+    when (item == NoInit ident) $ lift $ Errors.noInit ident isConst
     let (Init _ expr) = item
-    assertType expr expectedT
-    put (Map.insert ident (True, expectedT) state)
-
-  typecheckLets :: [Item] -> TCMonad ()
-  typecheckLets items = do
-    let first = head items
-        firstIdent = itemIdent first
-    when (first == NoInit firstIdent) $ lift $ Errors.letNoInit firstIdent
-    let (Init _ firstExpr) = first
-    expectedT <- typeOf firstExpr
-    forM_ items (`typecheckLet` expectedT)
+    t <- typeOf expr
+    put (Map.insert ident (isConst, t) state)
 
   typecheckAss :: Ident -> AssOp -> Expr -> TCMonad ()
   typecheckAss ident assOp expr = assertNonConst ident
@@ -237,7 +232,8 @@ module Typecheck (typecheck) where
     (_, returnType) <- ask
     case oper of
       Decl t items -> forM_ items (`typecheckDecl` t)
-      Let items -> typecheckLets items
+      Let items -> forM_ items (`typecheckAuto` True)
+      Auto items -> forM_ items (`typecheckAuto` False)
       Ass ident assOp expr -> typecheckAss ident assOp expr
       Incr ident -> typecheckIncr ident
       Decr ident -> typecheckIncr ident

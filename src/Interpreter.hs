@@ -39,6 +39,7 @@ transOper :: Oper -> Result
 transOper x = case x of
   Decl type_ items -> failure x
   Let items -> failure x
+  Auto items -> failure x
   Ass ident assop expr -> failure x
   Incr ident -> failure x
   Decr ident -> failure x
@@ -68,9 +69,12 @@ transType x = case x of
   Void -> failure x
   TypeOf expr -> failure x
   FnType types -> failure x
+  Array type_ -> failure x
 transExpr :: Expr -> Result
 transExpr x = case x of
   EFun funexec -> failure x
+  EArrayInit type_ expr -> failure x
+  EArray exprs -> failure x
   EVar ident -> failure x
   EInt integer -> failure x
   EChar char -> failure x

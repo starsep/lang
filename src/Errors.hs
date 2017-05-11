@@ -1,7 +1,7 @@
 module Errors
   (parsing, typecheck, multipleFnDef, noMain, badMain, vRetNoVoid, retVoid,
    badRetType, expectedExpression, shadowTopDef, shadowVariable,
-   variableUndeclared, letNoInit, changingConst, diffTypesBinOp,
+   variableUndeclared, noInit, changingConst, diffTypesBinOp,
    sameArgNames, nonNumeric, nonBoolean, functionUndeclared, notLambda,
    numberOfArgs, typesOfArgs, nonIterable) where
   import AbsStarsepLang
@@ -15,14 +15,24 @@ module Errors
   errorColor = putStr $ escapeChar : "[31;1m"
   warningColor :: IO ()
   warningColor = putStr $ escapeChar : "[33;1m"
-  normalColor :: IO ()
-  normalColor = putStr $ escapeChar : "[0m"
+  normalColor :: String
+  normalColor = escapeChar : "[0m"
+  typeColor :: String
+  typeColor = escapeChar : "[34;1m"
+
+  typeString :: Type -> String
+  typeString t =
+    typeColor ++ show t ++ normalColor
+
+  typeOfString :: Type -> String
+  typeOfString t =
+    " (typeof = " ++ typeString t ++ ") "
 
   printError :: String -> IO ()
   printError msg = do
     errorColor
     putStr "Error: "
-    normalColor
+    putStr normalColor
     putStrLn msg
     exitFailure
 
@@ -30,7 +40,7 @@ module Errors
   printWarning msg = do
     warningColor
     putStr "Warning: "
-    normalColor
+    putStr normalColor
     putStrLn msg
 
   parsing :: String -> IO ()
@@ -51,7 +61,7 @@ module Errors
 
   badMain :: IO ()
   badMain = typecheck $ "main function has bad type, it " ++
-                        "should be void without arguments"
+                        "should be " ++ typeString Void ++ " without arguments"
 
   vRetNoVoid :: Type -> IO ()
   vRetNoVoid t = typecheck $ "return without value in function returning " ++ show t
@@ -60,12 +70,12 @@ module Errors
   retVoid e = typecheck $ "returning " ++ show e ++ " in void function"
 
   badRetType :: Expr -> Type -> Type -> IO ()
-  badRetType e t rt = typecheck $ "returning " ++ show e ++ " (typeof = " ++
-    show t ++ ") in function returning " ++ show rt
+  badRetType e t rt = typecheck $ "returning " ++ show e ++
+    typeOfString t ++ "in function returning " ++ show rt
 
   expectedExpression :: Expr -> Type -> Type -> IO ()
   expectedExpression e t expected = typecheck $ "expected expression of type " ++
-    show expected ++ " got " ++ show e ++ " (typeof = " ++ show t ++ ")"
+    show expected ++ " got " ++ show e ++ typeOfString t
 
   shadowTopDef :: Ident -> IO ()
   shadowTopDef (Ident name) = typecheck $ "shadowing function " ++ name
@@ -77,9 +87,11 @@ module Errors
   variableUndeclared (Ident name) = typecheck $ "variable " ++ name
     ++ " is undeclared"
 
-  letNoInit :: Ident -> IO ()
-  letNoInit (Ident name) = typecheck $ "declaring constant " ++ name
-      ++ " without init"
+  noInit :: Ident -> Bool -> IO ()
+  noInit (Ident name) isConst =
+    typecheck $ "declaring " ++
+      if isConst then "constant" else "variable with auto type" ++
+      " " ++ name ++ " without init"
 
   changingConst :: Ident -> IO ()
   changingConst (Ident name) = typecheck $ "you cannot change constant " ++ name
@@ -92,15 +104,15 @@ module Errors
   sameArgNames (Ident arg) = typecheck $ "duplicate argument name " ++ arg
 
   nonNumeric :: Expr -> Type -> IO ()
-  nonNumeric expr t = typecheck $ show expr ++ " is not numeric (typeof = " ++
-    show t ++ ")"
+  nonNumeric expr t =
+    typecheck $ show expr ++ " is not numeric" ++ typeOfString t
 
   nonBoolean :: Expr -> IO ()
   nonBoolean expr = typecheck $ show expr ++ " is not boolean"
 
   nonIterable :: Expr -> Type -> IO ()
-  nonIterable expr t = typecheck $ show expr ++ " is not iterable (typeof = " ++
-    show t ++ ")"
+  nonIterable expr t =
+    typecheck $ show expr ++ " is not iterable" ++ typeOfString t
 
   functionUndeclared :: Ident -> IO ()
   functionUndeclared (Ident name) = typecheck $ "function " ++ name ++
