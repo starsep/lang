@@ -24,6 +24,7 @@ Init.         Item ::= Ident "=" Expr ;
 separator nonempty Item "," ;
 
 Let.          Oper ::= "let" [Item] ;
+Auto.         Oper ::= "auto" [Item] ;
 Ass.          Oper ::= Ident AssOp Expr ;
 Incr.         Oper ::= Ident "++" ;
 Decr.         Oper ::= Ident "--" ;
@@ -55,12 +56,15 @@ Bool.         Type ::= "bool" ;
 Float.        Type ::= "float" ;
 Void.         Type ::= "void" ;
 TypeOf.       Type ::= "typeof" "(" Expr ")" ;
-FnType.       Type ::= "Fn" "<" [Type] ">" ;
+FnType.       Type ::= "fn" "<" [Type] ">" ;
+Array.        Type ::= "array" "<" Type ">" ;
 separator nonempty Type "->" ;
 
 -- Expressions ---------------------------------------------
 
 EFun.         Expr8 ::= FunExec ;
+EArrayInit.   Expr7 ::= "array" "[" Type "," Expr "]" ;
+EArray.       Expr7 ::= "array" "(" [Expr] ")" ;
 EVar.         Expr7 ::= Ident ;
 EInt.         Expr7 ::= Integer ;
 EChar.        Expr7 ::= Char ;
