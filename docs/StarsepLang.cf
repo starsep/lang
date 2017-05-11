@@ -55,7 +55,6 @@ Str.          Type ::= "string" ;
 Bool.         Type ::= "bool" ;
 Float.        Type ::= "float" ;
 Void.         Type ::= "void" ;
-TypeOf.       Type ::= "typeof" "(" Expr ")" ;
 FnType.       Type ::= "fn" "<" [Type] ">" ;
 separator nonempty Type "->" ;
 

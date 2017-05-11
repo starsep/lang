@@ -55,39 +55,39 @@ The reserved words used in StarsepLang are the following:
 
 <TABLE ALIGN="center" CELLPADDING="4">
 <TR>
-<TD><CODE>array</CODE></TD>
 <TD><CODE>assert</CODE></TD>
 <TD><CODE>auto</CODE></TD>
 <TD><CODE>bool</CODE></TD>
+<TD><CODE>char</CODE></TD>
 </TR>
 <TR>
-<TD><CODE>char</CODE></TD>
 <TD><CODE>elif</CODE></TD>
 <TD><CODE>else</CODE></TD>
 <TD><CODE>false</CODE></TD>
+<TD><CODE>float</CODE></TD>
 </TR>
 <TR>
-<TD><CODE>float</CODE></TD>
 <TD><CODE>fn</CODE></TD>
 <TD><CODE>for</CODE></TD>
 <TD><CODE>if</CODE></TD>
+<TD><CODE>in</CODE></TD>
 </TR>
 <TR>
-<TD><CODE>in</CODE></TD>
 <TD><CODE>int</CODE></TD>
 <TD><CODE>let</CODE></TD>
 <TD><CODE>loop</CODE></TD>
+<TD><CODE>print</CODE></TD>
 </TR>
 <TR>
-<TD><CODE>print</CODE></TD>
 <TD><CODE>return</CODE></TD>
 <TD><CODE>string</CODE></TD>
 <TD><CODE>true</CODE></TD>
+<TD><CODE>void</CODE></TD>
 </TR>
 <TR>
-<TD><CODE>typeof</CODE></TD>
-<TD><CODE>void</CODE></TD>
 <TD><CODE>while</CODE></TD>
+<TD></TD>
+<TD></TD>
 </TR>
 </TABLE>
 
@@ -115,38 +115,33 @@ The symbols used in StarsepLang are the following:
 <TD>-&gt;</TD>
 </TR>
 <TR>
-<TD>[</TD>
-<TD>]</TD>
 <TD>-</TD>
 <TD>!</TD>
-</TR>
-<TR>
 <TD COLSPAN="2">&amp;&amp; |</TD>
-<TD>| ?</TD>
-<TD>:</TD>
 </TR>
 <TR>
+<TD>?</TD>
+<TD>:</TD>
 <TD>@</TD>
 <TD>+</TD>
+</TR>
+<TR>
 <TD>*</TD>
 <TD>/</TD>
-</TR>
-<TR>
 <TD>%</TD>
 <TD>&lt;=</TD>
+</TR>
+<TR>
 <TD>&gt;=</TD>
 <TD>==</TD>
-</TR>
-<TR>
 <TD>!=</TD>
 <TD>+=</TD>
-<TD>-=</TD>
-<TD>*=</TD>
 </TR>
 <TR>
+<TD>-=</TD>
+<TD>*=</TD>
 <TD>/=</TD>
 <TD>%=</TD>
-<TD></TD>
 </TR>
 </TABLE>
 
@@ -389,17 +384,7 @@ All other symbols are terminals.
 <TR>
 <TD></TD>
 <TD ALIGN="center"><B>|</B></TD>
-<TD><CODE>typeof</CODE> <CODE>(</CODE> <I>Expr</I> <CODE>)</CODE></TD>
-</TR>
-<TR>
-<TD></TD>
-<TD ALIGN="center"><B>|</B></TD>
 <TD><CODE>fn</CODE> <CODE>&lt;</CODE> <I>[Type]</I> <CODE>&gt;</CODE></TD>
-</TR>
-<TR>
-<TD></TD>
-<TD ALIGN="center"><B>|</B></TD>
-<TD><CODE>array</CODE> <CODE>&lt;</CODE> <I>Type</I> <CODE>&gt;</CODE></TD>
 </TR>
 <TR>
 <TD><I>[Type]</I></TD>
@@ -424,16 +409,6 @@ All other symbols are terminals.
 <TR>
 <TD><I>Expr7</I></TD>
 <TD>-&gt;</TD>
-<TD><CODE>array</CODE> <CODE>[</CODE> <I>Type</I> <CODE>,</CODE> <I>Expr</I> <CODE>]</CODE></TD>
-</TR>
-<TR>
-<TD></TD>
-<TD ALIGN="center"><B>|</B></TD>
-<TD><CODE>array</CODE> <CODE>(</CODE> <I>[Expr]</I> <CODE>)</CODE></TD>
-</TR>
-<TR>
-<TD></TD>
-<TD ALIGN="center"><B>|</B></TD>
 <TD><I>Ident</I></TD>
 </TR>
 <TR>
