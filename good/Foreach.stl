@@ -1,6 +1,5 @@
 void main() {
     for c in "abc" {
-        c += 42;
         print(c);
     }
     // should print abc 

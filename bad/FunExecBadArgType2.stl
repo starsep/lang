@@ -1,0 +1,7 @@
+int foo(int x, int y) {
+    return x * x + y;
+}
+
+void main() {
+    int a = foo(3.14, "abc");
+}
