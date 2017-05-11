@@ -67,7 +67,6 @@ transType x = case x of
   Bool -> failure x
   Float -> failure x
   Void -> failure x
-  TypeOf expr -> failure x
   FnType types -> failure x
 transExpr :: Expr -> Result
 transExpr x = case x of

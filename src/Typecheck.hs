@@ -3,7 +3,7 @@ module Typecheck (typecheck) where
   import qualified Data.Map as Map
   import qualified Errors
   import Control.Monad
-  import Control.Monad.RWS
+  import Control.Monad.RWS (RWST, ask, get, put, lift, runRWST)
   import Data.Maybe
 
   type TypedFnDefs = Map.Map Ident Type
@@ -12,8 +12,8 @@ module Typecheck (typecheck) where
   type TCMonad = RWST TCEnv () TCState IO
 
   typeOf :: Expr -> TCMonad Type
-  typeOf expr =
-    case expr of
+  typeOf e =
+    case e of
       EFun (FunExec ident exprs) -> outputType ident exprs
       EVar ident -> typeOfIdent ident
       EInt _ -> return Int
@@ -26,16 +26,16 @@ module Typecheck (typecheck) where
       ENot expr -> do
         assertBExpr expr
         return Bool
-      EAdd e1 addOp e2 -> checkAddOp e1 addOp e2
-      EMul e1 mulOp e2 -> checkMulOp e1 mulOp e2
-      ERel e1 relOp e2 -> do
-        checkRelOp e1 relOp e2
+      EAdd e1 _ e2 -> checkNumOp e1 e2
+      EMul e1 _ e2 -> checkNumOp e1 e2
+      ERel e1 _ e2 -> do
+        checkRelOp e1 e2
         return Bool
       EOr b1 b2 -> checkBExprOp b1 b2
       EAnd b1 b2 -> checkBExprOp b1 b2
       ETernary b e1 e2 -> do
         assertBExpr b
-        checkRelOp e1 EQU e2
+        checkRelOp e1 e2
         typeOf e1
       Lambda args expr -> typeOfLambda args expr
 
@@ -107,11 +107,11 @@ module Typecheck (typecheck) where
     assertNumericExpr expr
     typeOf expr
 
-  checkAddOp :: Expr -> AddOp -> Expr -> TCMonad Type
-  checkAddOp expr1 addOp expr2 = checkBinOp expr1 expr2
-
-  checkMulOp :: Expr -> MulOp -> Expr -> TCMonad Type
-  checkMulOp expr1 mulOp expr2 = checkBinOp expr1 expr2
+  checkNumOp :: Expr -> Expr -> TCMonad Type
+  checkNumOp expr1 expr2 = do
+    assertNumericExpr expr1
+    assertNumericExpr expr2
+    checkBinOp expr1 expr2
 
   checkArgs :: Ident -> [Expr] -> [Type] -> TCMonad Type
   checkArgs ident args t = do
@@ -222,7 +222,10 @@ module Typecheck (typecheck) where
     put (Map.insert ident (isConst, t) state)
 
   typecheckAss :: Ident -> AssOp -> Expr -> TCMonad ()
-  typecheckAss ident assOp expr = assertNonConst ident
+  typecheckAss ident assOp expr = do
+    assertNonConst ident
+    ltype <- typeOf $ EVar ident
+    assertType expr ltype
 
   typecheckOper :: Oper -> TCMonad ()
   typecheckOper oper = do
@@ -244,8 +247,15 @@ module Typecheck (typecheck) where
       Assert bExpr -> assertBExpr bExpr
     return ()
 
-  checkRelOp :: Expr -> RelOp -> Expr -> TCMonad ()
-  checkRelOp expr1 relOp expr2 =
+  assertComparable :: Expr -> TCMonad ()
+  assertComparable expr = do
+    t <- typeOf expr
+    case t of
+      FnType _ -> lift $ Errors.nonComparable expr t
+      _ -> return ()
+
+  checkRelOp :: Expr -> Expr -> TCMonad ()
+  checkRelOp expr1 expr2 =
     void $ checkBinOp expr1 expr2
 
   assertBExpr :: Expr -> TCMonad ()
