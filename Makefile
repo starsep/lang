@@ -1,7 +1,7 @@
 BUILD=build
 SHELL=/usr/bin/env bash
 GHCFLAGS=-Wall
-GHC=ghc $(GHCFLAGS)
+GHC=ghc
 TMP=tmp
 
 BINARIES=interpreter TestStarsepLang
@@ -73,7 +73,7 @@ $(BNFC_SOURCES): grammar/StarsepLang.cf
 
 interpreter: $(BNFC_SOURCES) $(LINKED_SOURCES)
 	cd $(BUILD) && \
-	$(GHC) --make Main.hs -o ../$@
+	$(GHC) $(GHCFLAGS) --make Main.hs -o ../$@
 
 docs: docs/DocStarsepLang.html docs/DocStarsepLang.pdf
 
