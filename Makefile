@@ -4,7 +4,7 @@ GHCFLAGS=-Wall
 GHC=ghc
 TMP=tmp
 
-BINARIES=interpreter TestStarsepLang
+BINARIES=TestStarsepLang interpreter 
 SOURCES=Environment.hs Errors.hs Interpreter.hs Main.hs Typecheck.hs
 LINKED_SOURCES=$(addprefix $(BUILD)/,$(SOURCES))
 BNFC_SOURCES_FILES=AbsStarsepLang.hs ErrM.hs LexStarsepLang.hs \
