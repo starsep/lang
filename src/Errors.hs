@@ -5,7 +5,6 @@ module Errors
    sameArgNames, nonNumeric, nonBoolean, functionUndeclared, notLambda,
    numberOfArgs, typesOfArgs, nonIterable) where
   import AbsStarsepLang
-  import System.IO
   import Data.Char
   import System.Exit
 

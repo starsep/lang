@@ -1,10 +1,7 @@
 module Main (main) where
 
-import LexStarsepLang
 import ParStarsepLang
 import AbsStarsepLang
-import Interpreter
-import Environment
 import ErrM
 import qualified Errors
 import Typecheck
@@ -20,6 +17,9 @@ main = do
   result <- interpreter code
   putStrLn result
 
+interpret :: Program -> IO ()
+interpret _ = return ()
+
 interpreter :: String -> IO String
 interpreter code = do
   prog <- case pProgram (myLexer code) of
@@ -28,4 +28,5 @@ interpreter code = do
       liftIO $ Errors.parsing msg
       return $ Program []
   typecheck prog
+  interpret prog
   return "" -- $ show prog
