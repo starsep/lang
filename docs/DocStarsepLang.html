@@ -75,18 +75,18 @@ The reserved words used in StarsepLang are the following:
 <TR>
 <TD><CODE>int</CODE></TD>
 <TD><CODE>let</CODE></TD>
+<TD><CODE>list</CODE></TD>
 <TD><CODE>loop</CODE></TD>
-<TD><CODE>print</CODE></TD>
 </TR>
 <TR>
+<TD><CODE>print</CODE></TD>
 <TD><CODE>return</CODE></TD>
 <TD><CODE>string</CODE></TD>
 <TD><CODE>true</CODE></TD>
-<TD><CODE>void</CODE></TD>
 </TR>
 <TR>
+<TD><CODE>void</CODE></TD>
 <TD><CODE>while</CODE></TD>
-<TD></TD>
 <TD></TD>
 </TR>
 </TABLE>
@@ -115,30 +115,35 @@ The symbols used in StarsepLang are the following:
 <TD>-&gt;</TD>
 </TR>
 <TR>
+<TD>[</TD>
+<TD>]</TD>
 <TD>-</TD>
 <TD>!</TD>
-<TD COLSPAN="2">&amp;&amp; |</TD>
 </TR>
 <TR>
-<TD>?</TD>
+<TD>$</TD>
+<TD COLSPAN="2">&amp;&amp; |</TD>
+<TD>| ?</TD>
+</TR>
+<TR>
 <TD>:</TD>
 <TD>@</TD>
 <TD>+</TD>
+<TD>*</TD>
 </TR>
 <TR>
-<TD>*</TD>
 <TD>/</TD>
 <TD>%</TD>
 <TD>&lt;=</TD>
+<TD>&gt;=</TD>
 </TR>
 <TR>
-<TD>&gt;=</TD>
 <TD>==</TD>
 <TD>!=</TD>
 <TD>+=</TD>
+<TD>-=</TD>
 </TR>
 <TR>
-<TD>-=</TD>
 <TD>*=</TD>
 <TD>/=</TD>
 <TD>%=</TD>
@@ -387,6 +392,11 @@ All other symbols are terminals.
 <TD><CODE>fn</CODE> <CODE>&lt;</CODE> <I>[Type]</I> <CODE>&gt;</CODE></TD>
 </TR>
 <TR>
+<TD></TD>
+<TD ALIGN="center"><B>|</B></TD>
+<TD><CODE>list</CODE> <CODE>&lt;</CODE> <I>Type</I> <CODE>&gt;</CODE></TD>
+</TR>
+<TR>
 <TD><I>[Type]</I></TD>
 <TD>-&gt;</TD>
 <TD><I>Type</I></TD>
@@ -404,11 +414,11 @@ All other symbols are terminals.
 <TR>
 <TD></TD>
 <TD ALIGN="center"><B>|</B></TD>
-<TD><CODE>(</CODE> <I>Expr</I> <CODE>)</CODE></TD>
+<TD><I>Type</I> <CODE>[</CODE> <I>[Expr]</I> <CODE>]</CODE></TD>
 </TR>
 <TR>
-<TD><I>Expr7</I></TD>
-<TD>-&gt;</TD>
+<TD></TD>
+<TD ALIGN="center"><B>|</B></TD>
 <TD><I>Ident</I></TD>
 </TR>
 <TR>
@@ -444,17 +454,27 @@ All other symbols are terminals.
 <TR>
 <TD></TD>
 <TD ALIGN="center"><B>|</B></TD>
+<TD><CODE>(</CODE> <I>Expr</I> <CODE>)</CODE></TD>
+</TR>
+<TR>
+<TD><I>Expr7</I></TD>
+<TD>-&gt;</TD>
+<TD><CODE>-</CODE> <I>Expr8</I></TD>
+</TR>
+<TR>
+<TD></TD>
+<TD ALIGN="center"><B>|</B></TD>
+<TD><CODE>!</CODE> <I>Expr8</I></TD>
+</TR>
+<TR>
+<TD></TD>
+<TD ALIGN="center"><B>|</B></TD>
 <TD><I>Expr8</I></TD>
 </TR>
 <TR>
 <TD><I>Expr6</I></TD>
 <TD>-&gt;</TD>
-<TD><CODE>-</CODE> <I>Expr7</I></TD>
-</TR>
-<TR>
-<TD></TD>
-<TD ALIGN="center"><B>|</B></TD>
-<TD><CODE>!</CODE> <I>Expr7</I></TD>
+<TD><I>Expr6</I> <I>MulOp</I> <I>Expr7</I></TD>
 </TR>
 <TR>
 <TD></TD>
@@ -464,7 +484,7 @@ All other symbols are terminals.
 <TR>
 <TD><I>Expr5</I></TD>
 <TD>-&gt;</TD>
-<TD><I>Expr5</I> <I>MulOp</I> <I>Expr6</I></TD>
+<TD><I>Expr5</I> <I>AddOp</I> <I>Expr6</I></TD>
 </TR>
 <TR>
 <TD></TD>
@@ -474,7 +494,12 @@ All other symbols are terminals.
 <TR>
 <TD><I>Expr4</I></TD>
 <TD>-&gt;</TD>
-<TD><I>Expr4</I> <I>AddOp</I> <I>Expr5</I></TD>
+<TD><I>Expr5</I> <CODE>++</CODE> <I>Expr4</I></TD>
+</TR>
+<TR>
+<TD></TD>
+<TD ALIGN="center"><B>|</B></TD>
+<TD><I>Expr5</I> <CODE>$</CODE> <I>Expr4</I></TD>
 </TR>
 <TR>
 <TD></TD>
