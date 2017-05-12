@@ -6,8 +6,8 @@ TMP=tmp
 ARGS=
 
 BINARIES=TestStarsepLang interpreter
-SOURCES=Debug.hs Environment.hs Errors.hs Interpreter.hs Main.hs Typecheck.hs
-LINKED_SOURCES=$(addprefix $(BUILD)/,$(SOURCES))
+SOURCES=Debug Errors Interpreter Main Typecheck
+LINKED_SOURCES=$(addsuffix .hs,$(addprefix $(BUILD)/,$(SOURCES)))
 BNFC_SOURCES_FILES=AbsStarsepLang.hs ErrM.hs LexStarsepLang.hs \
 	ParStarsepLang.hs PrintStarsepLang.hs TestStarsepLang.hs
 BNFC_SOURCES=$(addprefix $(BUILD)/,$(BNFC_SOURCES_FILES))
