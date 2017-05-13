@@ -4,7 +4,7 @@ module Errors
    variableUndeclared, noInit, changingConst, diffTypesBinOp,
    sameArgNames, nonNumeric, nonBoolean, functionUndeclared, notLambda,
    numberOfArgs, typesOfArgs, nonIterable, nonComparable, nonPrintable,
-   listDiffJoin, nonListType) where
+   listDiffJoin, nonListType, assert) where
   import AbsStarsepLang
   import PrintStarsepLang
   import Data.Char
@@ -168,3 +168,11 @@ module Errors
   nonListType :: Expr -> Type -> IO ()
   nonListType e t = typecheck $ "expected list type, got " ++ exprString e ++
     typeOfString t
+
+  assert :: Expr -> IO ()
+  assert e = do
+    errorColor
+    putStr "Assert: "
+    putStr normalColor
+    putStrLn $ "expression " ++ exprString e ++ " failed"
+    exitFailure
