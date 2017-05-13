@@ -13,7 +13,8 @@ import Numeric
 type Loc = Int
 type IEnv = Map.Map Ident Loc
 type IVarState = Map.Map Loc Expr
-type IState = (Loc, IEnv, IVarState)
+type IShadowed = Map.Map Ident Loc
+type IState = (Loc, IEnv, IVarState, IShadowed)
 type IMonad = StateT IState IO
 
 failure :: Show a => a -> IMonad ()
@@ -22,10 +23,19 @@ failure x = fail $ "Undefined case: " ++ show x
 isMain :: FnDef -> Bool
 isMain (FnDef _ (Ident name) _ _) = name == "main"
 
+addFnToState :: FnDef -> IState -> IState
+addFnToState (FnDef _ ident args _) (loc, env, state, s) =
+  let newEnv = env --Map.insert ident loc
+      newState = state in --Map.insert loc
+  (loc + 1, newEnv, newState, s)
+
+initState :: [FnDef] -> IState
+initState fns = foldr addFnToState (0, Map.empty, Map.empty, Map.empty) fns
+
 interpret :: Program -> IO ()
 interpret (Program fns) = do
   let main = head $ filter isMain fns
-  void $ runStateT (transFnDef main) (0, Map.empty, Map.empty)
+  void $ runStateT (transFnDef main) (initState fns)
 
 transFnDef :: FnDef -> IMonad ()
 transFnDef (FnDef type_ ident args block) =
@@ -33,23 +43,43 @@ transFnDef (FnDef type_ ident args block) =
   transBlock block
 
 transBlock :: Block -> IMonad ()
-transBlock (Block stmts) =
+transBlock (Block stmts) = do
+  oldShadowed <- getShadowed
   forM_ stmts transStmt
+  env <- ask
+  shadowed <- getShadowed
+  putShadowed oldShadowed
+  putEnv $ Map.union shadowed env
 
 ask :: IMonad IEnv
 ask = do
-  (_, env, _) <- get
+  (_, env, _, _) <- get
   return env
+
+getShadowed :: IMonad IShadowed
+getShadowed = do
+  (_, _, _, shadowed) <- get
+  return shadowed
 
 getState :: IMonad IVarState
 getState = do
-  (_, _, state) <- get
+  (_, _, state, _) <- get
   return state
 
 putState :: IVarState -> IMonad ()
 putState newState = do
-  (loc, env, _) <- get
-  put (loc, env, newState)
+  (loc, env, _, s) <- get
+  put (loc, env, newState, s)
+
+putEnv :: IEnv -> IMonad ()
+putEnv env = do
+  (loc, _, state, shadowed) <- get
+  put (loc, env, state, shadowed)
+
+putShadowed :: IShadowed -> IMonad ()
+putShadowed shadowed = do
+  (loc, env, state, _) <- get
+  put (loc, env, state, shadowed)
 
 evalCond :: Expr -> IMonad Bool
 evalCond e = do
@@ -126,8 +156,9 @@ assign ident expr = do
 declare :: Ident -> Expr -> IMonad ()
 declare ident e = do
   expr <- eval e
-  (loc, env, state) <- get
-  put (loc + 1, Map.insert ident loc env, Map.insert loc expr state)
+  (loc, env, state, shadowed) <- get
+  let newShadowed = if Map.member ident env then Map.insert ident (env ! ident) env else env
+  put (loc + 1, Map.insert ident loc env, Map.insert loc expr state, newShadowed)
 
 transDecl :: Type -> Item -> IMonad ()
 transDecl t item =
@@ -171,7 +202,7 @@ toEBool q = if q then ETrue else EFalse
 eval :: Expr -> IMonad Expr
 eval x =
   case x of
-    EFun funexec -> fail $ show x
+    EFun output args block -> return x
     EList type_ exprs -> return x
     EVar ident -> do
       state <- getState

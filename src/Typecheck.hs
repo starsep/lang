@@ -40,7 +40,8 @@ addDecl ident = do
 typeOf :: Expr -> TCMonad Type
 typeOf q =
   case q of
-    EFun (FunExec ident exprs) -> outputType ident exprs
+    EFun output args block -> return $ fnHeaderToFnType output args 
+    EFunExec (FunExec ident exprs) -> outputType ident exprs
     EList t exprs -> do
       forM_ exprs (`assertType` t)
       return $ ListT t
