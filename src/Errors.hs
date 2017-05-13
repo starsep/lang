@@ -4,7 +4,7 @@ module Errors
    variableUndeclared, noInit, changingConst, diffTypesBinOp,
    sameArgNames, nonNumeric, nonBoolean, functionUndeclared, notLambda,
    numberOfArgs, typesOfArgs, nonIterable, nonComparable, nonPrintable,
-   listDiffJoin, nonListType, assert) where
+   listDiffJoin, nonListType, assert, alreadyDecl, divZero) where
   import AbsStarsepLang
   import PrintStarsepLang
   import Data.Char
@@ -45,13 +45,16 @@ module Errors
   typeOfString t =
     " (typeof = " ++ typeString t ++ ") "
 
-  printError :: String -> IO ()
-  printError msg = do
+  errorTemplate :: String -> String -> IO ()
+  errorTemplate header msg = do
     errorColor
-    putStr "Error: "
+    putStr $ header ++ ": "
     putStr normalColor
     putStrLn msg
     exitFailure
+
+  printError :: String -> IO ()
+  printError = errorTemplate "Error"
 
   printWarning :: String -> IO ()
   printWarning msg = do
@@ -61,10 +64,13 @@ module Errors
     putStrLn msg
 
   parsing :: String -> IO ()
-  parsing msg = printError $ "parsing failed, " ++ msg
+  parsing = errorTemplate "Parsing"
 
   typecheck :: String -> IO ()
-  typecheck msg = printError $ "typecheck failed, " ++ msg
+  typecheck = errorTemplate "Typecheck"
+
+  runtime :: String -> IO ()
+  runtime = errorTemplate "Runtime"
 
   typecheckWarn :: String -> IO ()
   typecheckWarn msg = printWarning $ "typecheck: " ++ msg
@@ -170,9 +176,13 @@ module Errors
     typeOfString t
 
   assert :: Expr -> IO ()
-  assert e = do
-    errorColor
-    putStr "Assert: "
-    putStr normalColor
-    putStrLn $ "expression " ++ exprString e ++ " failed"
-    exitFailure
+  assert e = errorTemplate "Assert" $ "expression " ++ exprString e ++ " failed"
+
+  alreadyDecl :: Ident -> IO ()
+  alreadyDecl ident = typecheck $ identString ident ++
+    " is already declared in this scope"
+
+  divZero :: IO Integer
+  divZero = do
+    runtime $ "division by " ++ exprString (EInt 0)
+    return 0
