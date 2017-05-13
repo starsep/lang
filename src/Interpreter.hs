@@ -3,16 +3,18 @@ module Interpreter (interpret) where
 import AbsStarsepLang
 import Control.Exception.Base
 import Control.Monad
-import Control.Monad.RWS (RWST, ask, get, put, lift, runRWST)
+import Control.Monad.State (StateT, get, put, lift, runStateT)
+import Data.Map ((!))
+import qualified Data.Map as Map
 import Data.Maybe
-import Numeric
 import qualified Errors
+import Numeric
 
 type Loc = Int
-type IEnv = ()
-type IState = ()
---type IMonad = RWST IEnv () IState IO
-type IMonad = IO
+type IEnv = Map.Map Ident Loc
+type IVarState = Map.Map Loc Expr
+type IState = (Loc, IEnv, IVarState)
+type IMonad = StateT IState IO
 
 failure :: Show a => a -> IMonad ()
 failure x = fail $ "Undefined case: " ++ show x
@@ -23,7 +25,7 @@ isMain (FnDef _ (Ident name) _ _) = name == "main"
 interpret :: Program -> IO ()
 interpret (Program fns) = do
   let main = head $ filter isMain fns
-  void $ transFnDef main
+  void $ runStateT (transFnDef main) (0, Map.empty, Map.empty)
 
 transFnDef :: FnDef -> IMonad ()
 transFnDef (FnDef type_ ident args block) =
@@ -33,6 +35,21 @@ transFnDef (FnDef type_ ident args block) =
 transBlock :: Block -> IMonad ()
 transBlock (Block stmts) =
   forM_ stmts transStmt
+
+ask :: IMonad IEnv
+ask = do
+  (_, env, _) <- get
+  return env
+
+getState :: IMonad IVarState
+getState = do
+  (_, _, state) <- get
+  return state
+
+putState :: IVarState -> IMonad ()
+putState newState = do
+  (loc, env, _) <- get
+  put (loc, env, newState)
 
 evalCond :: Expr -> IMonad Bool
 evalCond e = do
@@ -58,10 +75,7 @@ transStmt x = case x of
     transBlock $ Block [OperStmt oper1, While expr body]
   Foreach ident expr block -> do
     first <- headList expr
-    case first of
-      Nothing -> return ()
-      Just v -> do
-        transOper (Auto [Init ident v])
+    when (isJust first) $ transOper (Auto [Init ident (fromJust first)])
   Loop block -> transStmt $ While ETrue block
   CondIf ifstmt -> void $ transIfStmt ifstmt
   ElseStmt ifelsestmt -> transIfElseStmt ifelsestmt
@@ -73,28 +87,78 @@ execPrint :: Expr -> IMonad ()
 execPrint expr = do
   value <- eval expr
   case value of
-    EString s -> putStr s
-    EInt i -> putStr $ show i
-    EChar c -> putStr [c]
-    EFloat f -> putStr $ Numeric.showFFloat (Just 4) f ""
-    ETrue -> putStr $ show True
-    EFalse -> putStr $ show False
+    EString s -> lift $ putStr s
+    EInt i -> lift $ putStr $ show i
+    EChar c -> lift $ putStr [c]
+    EFloat f -> lift $ putStr $ Numeric.showFFloat (Just 4) f ""
+    ETrue -> lift $ putStr $ show True
+    EFalse -> lift $ putStr $ show False
     EList t l -> execPrintList t l
     _ -> fail "print :<"
 
 execAssert :: Expr -> IMonad ()
 execAssert expr = do
   b <- eval expr
-  when (b /= ETrue) $ Errors.assert expr
+  when (b /= ETrue) $ lift $ Errors.assert expr
+
+
+defaultValue :: Type -> Expr
+defaultValue t = case t of
+  Int -> EInt 0
+  Char -> EChar '\0'
+  Str -> EString ""
+  Bool -> EFalse
+  Float -> EFloat 0.0
+  ListT t -> EList t []
+
+getLoc :: Ident -> IMonad Loc
+getLoc ident = do
+  env <- ask
+  return $ env ! ident
+
+assign :: Ident -> Expr -> IMonad ()
+assign ident expr = do
+  e <- eval expr
+  state <- getState
+  loc <- getLoc ident
+  putState $ Map.insert loc e state
+
+declare :: Ident -> Expr -> IMonad ()
+declare ident e = do
+  expr <- eval e
+  (loc, env, state) <- get
+  put (loc + 1, Map.insert ident loc env, Map.insert loc expr state)
+
+transDecl :: Type -> Item -> IMonad ()
+transDecl t item =
+  case item of
+    Init ident expr -> declare ident expr
+    NoInit ident -> declare ident $ defaultValue t
+
+transLet :: Item -> IMonad ()
+transLet (Init ident expr) = declare ident expr
+
+transAssOp :: AssOp -> Ident -> Expr -> Expr
+transAssOp x ident expr =
+  let varExp = EVar ident in
+  case x of
+    Assign -> expr
+    PlusAss -> EAdd varExp Plus expr
+    MinusAss -> EAdd varExp Minus expr
+    MulAss -> EMul varExp Times expr
+    DivAss -> EMul varExp Div expr
+    ModAss -> EMul varExp Mod expr
 
 transOper :: Oper -> IMonad ()
 transOper x = case x of
-  Decl type_ items -> failure x
-  Let items -> failure x
-  Auto items -> failure x
-  Ass ident assop expr -> failure x
-  Incr ident -> failure x
-  Decr ident -> failure x
+  Decl type_ items -> forM_ items $ transDecl type_
+  Let items -> forM_ items transLet
+  Auto items -> forM_ items transLet
+  Ass ident assop expr -> do
+    e <- eval $ transAssOp assop ident expr
+    assign ident e
+  Incr ident -> transOper $ Ass ident PlusAss $ EInt 1
+  Decr ident -> transOper $ Ass ident MinusAss $ EInt 1
   Ret expr -> failure x
   VRet -> failure x
   FnExec funexec -> failure x
@@ -104,12 +168,15 @@ transOper x = case x of
 toEBool :: Bool -> Expr
 toEBool q = if q then ETrue else EFalse
 
-eval :: Expr -> IO Expr
+eval :: Expr -> IMonad Expr
 eval x =
   case x of
     EFun funexec -> fail $ show x
     EList type_ exprs -> return x
-    EVar ident -> fail $ show x
+    EVar ident -> do
+      state <- getState
+      loc <- getLoc ident
+      return $ state ! loc
     EInt integer -> return x
     EChar char -> return x
     EFloat double -> return x
@@ -134,8 +201,17 @@ eval x =
       let i = transAddOp addop
           f = transAddOp addop in
       transMathExpr expr1 expr2 i f
-    EJoin expr1 expr2 -> fail $ show x
-    EAppend expr1 expr2 -> fail $ show x
+    EJoin expr1 expr2 -> do
+      el1 <- eval expr1
+      el2 <- eval expr2
+      let (EList t l1) = el1
+          (EList _ l2) = el2
+      return $ EList t $ l1 ++ l2
+    EAppend expr1 expr2 -> do
+      e <- eval expr1
+      el <- eval expr2
+      let (EList t l) = el
+      return $ EList t (e : l)
     ERel expr1 relop expr2 -> do
       e1 <- eval expr1
       e2 <- eval expr2
@@ -157,19 +233,9 @@ eval x =
         eval expr3
     Lambda args expr -> fail $ show x
 
-transIdent :: Ident -> IMonad ()
-transIdent x = case x of
-  Ident string -> failure x
-transArg :: Arg -> IMonad ()
-transArg x = case x of
-  Arg type_ ident -> failure x
 transFunExec :: FunExec -> IMonad ()
-transFunExec x = case x of
-  FunExec ident exprs -> failure x
-transItem :: Item -> IMonad ()
-transItem x = case x of
-  NoInit ident -> failure x
-  Init ident expr -> failure x
+transFunExec x@(FunExec ident exprs) = failure x
+
 transIfStmt :: IfStmt -> IMonad Bool
 transIfStmt x = case x of
   IfElifStmt ifstmt expr block -> do
@@ -182,20 +248,11 @@ transIfStmt x = case x of
     b <- evalCond expr
     when b $ transBlock block
     return b
+
 transIfElseStmt :: IfElseStmt -> IMonad ()
 transIfElseStmt (IfElseStmt ifstmt block) = do
   b <- transIfStmt ifstmt
   unless b $ transBlock block
-transType :: Type -> IMonad ()
-transType x = case x of
-  Int -> failure x
-  Char -> failure x
-  Str -> failure x
-  Bool -> failure x
-  Float -> failure x
-  Void -> failure x
-  FnType types -> failure x
-  ListT type_ -> failure x
 
 divZeroHandler :: ArithException -> IO Integer
 divZeroHandler DivideByZero = Errors.divZero
@@ -209,7 +266,7 @@ transMathExpr expr1 expr2 fni fnf = do
   e2 <- eval expr2
   case (e1, e2) of
     (EInt i1, EInt i2) -> do
-      r <- tryIntOp i1 i2 fni `catch` divZeroHandler
+      r <- lift $ tryIntOp i1 i2 fni `catch` divZeroHandler
       return $ EInt r
     (EFloat f1, EFloat f2) -> return $ EFloat $ f1 `fnf` f2
 
@@ -240,11 +297,3 @@ transRelOp x = case x of
   GE -> (>=)
   EQU -> (==)
   NE -> (/=)
-transAssOp :: AssOp -> IMonad ()
-transAssOp x = case x of
-  Assign -> failure x
-  PlusAss -> failure x
-  MinusAss -> failure x
-  MulAss -> failure x
-  DivAss -> failure x
-  ModAss -> failure x
