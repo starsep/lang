@@ -1,0 +1,5 @@
+void main() {
+    for t in int[] {
+        assert(false);
+    }
+}

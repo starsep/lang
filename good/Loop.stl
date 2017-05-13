@@ -1,6 +1,6 @@
 void main() {
     // loop is equivalent of "while true"
-    loop {
-        print("42");
-    }
+    /* loop {
+        print("42\n");
+    } */
 }
