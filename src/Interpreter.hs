@@ -1,13 +1,14 @@
 module Interpreter (interpret) where
 
 import AbsStarsepLang
+import Control.Exception.Base
 import Control.Monad
-import Control.Monad.IfElse
 import Control.Monad.RWS (RWST, ask, get, put, lift, runRWST)
 import Data.Maybe
 import Numeric
 import qualified Errors
 
+type Loc = Int
 type IEnv = ()
 type IState = ()
 --type IMonad = RWST IEnv () IState IO
@@ -64,8 +65,6 @@ transStmt x = case x of
   Loop block -> transStmt $ While ETrue block
   CondIf ifstmt -> void $ transIfStmt ifstmt
   ElseStmt ifelsestmt -> transIfElseStmt ifelsestmt
-
-
 
 execPrintList :: Type -> [Expr] -> IMonad ()
 execPrintList t l = forM_ l execPrint
@@ -198,12 +197,20 @@ transType x = case x of
   FnType types -> failure x
   ListT type_ -> failure x
 
+divZeroHandler :: ArithException -> IO Integer
+divZeroHandler DivideByZero = Errors.divZero
+
+tryIntOp :: Integer -> Integer -> (Integer -> Integer -> Integer) -> IO Integer
+tryIntOp i1 i2 fni = evaluate $ i1 `fni` i2
+
 transMathExpr :: Expr -> Expr -> (Integer -> Integer -> Integer) -> (Double -> Double -> Double) -> IMonad Expr
 transMathExpr expr1 expr2 fni fnf = do
   e1 <- eval expr1
   e2 <- eval expr2
   case (e1, e2) of
-    (EInt i1, EInt i2) -> return $ EInt $ i1 `fni` i2
+    (EInt i1, EInt i2) -> do
+      r <- tryIntOp i1 i2 fni `catch` divZeroHandler
+      return $ EInt r
     (EFloat f1, EFloat f2) -> return $ EFloat $ f1 `fnf` f2
 
 floatExpr :: Expr -> Double
