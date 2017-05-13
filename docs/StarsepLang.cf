@@ -62,7 +62,8 @@ separator nonempty Type "->" ;
 
 -- Expressions ---------------------------------------------
 
-EFun.         Expr8 ::= FunExec ;
+EFunExec.     Expr8 ::= FunExec ;
+EFun.         Expr8 ::= Type "(" [Arg] ")" Block ;
 EList.        Expr8 ::= Type "[" [Expr] "]" ;
 EVar.         Expr8 ::= Ident ;
 EInt.         Expr8 ::= Integer ;
