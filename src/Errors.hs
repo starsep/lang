@@ -5,184 +5,185 @@ module Errors
    sameArgNames, nonNumeric, nonBoolean, functionUndeclared, notLambda,
    numberOfArgs, typesOfArgs, nonIterable, nonComparable, nonPrintable,
    listDiffJoin, nonListType, assert, alreadyDecl, divZero) where
-  import AbsStarsepLang
-  import PrintStarsepLang
-  import Data.Char
-  import Data.List
-  import System.Exit
 
-  escapeChar :: Char
-  escapeChar = chr 27
-  errorColor :: IO ()
-  errorColor = putStr $ escapeChar : "[31;1m"
-  warningColor :: IO ()
-  warningColor = putStr $ escapeChar : "[33;1m"
-  normalColor :: String
-  normalColor = escapeChar : "[0m"
-  typeColor :: String
-  typeColor = escapeChar : "[34;1m"
-  exprColor :: String
-  exprColor = escapeChar : "[35;1m"
+import AbsStarsepLang
+import PrintStarsepLang
+import Data.Char
+import Data.List
+import System.Exit
 
-  typeString :: Type -> String
-  typeString t =
-    typeColor ++ printTree t ++ normalColor
+escapeChar :: Char
+escapeChar = chr 27
+errorColor :: IO ()
+errorColor = putStr $ escapeChar : "[31;1m"
+warningColor :: IO ()
+warningColor = putStr $ escapeChar : "[33;1m"
+normalColor :: String
+normalColor = escapeChar : "[0m"
+typeColor :: String
+typeColor = escapeChar : "[34;1m"
+exprColor :: String
+exprColor = escapeChar : "[35;1m"
 
-  typesString :: [Type] -> String
-  typesString t = concat $ ("[" : intersperse "," (map typeString t)) ++ ["]"]
+typeString :: Type -> String
+typeString t =
+  typeColor ++ printTree t ++ normalColor
 
-  exprString :: Expr -> String
-  exprString e =
-    exprColor ++ printTree e ++ normalColor
+typesString :: [Type] -> String
+typesString t = concat $ ("[" : intersperse "," (map typeString t)) ++ ["]"]
 
-  numString :: Int -> String
-  numString n = exprColor ++ show n ++ normalColor
+exprString :: Expr -> String
+exprString e =
+  exprColor ++ printTree e ++ normalColor
 
-  identString :: Ident -> String
-  identString ident = exprString $ EVar ident
+numString :: Int -> String
+numString n = exprColor ++ show n ++ normalColor
 
-  typeOfString :: Type -> String
-  typeOfString t =
-    " (typeof = " ++ typeString t ++ ") "
+identString :: Ident -> String
+identString ident = exprString $ EVar ident
 
-  errorTemplate :: String -> String -> IO ()
-  errorTemplate header msg = do
-    errorColor
-    putStr $ header ++ ": "
-    putStr normalColor
-    putStrLn msg
-    exitFailure
+typeOfString :: Type -> String
+typeOfString t =
+  " (typeof = " ++ typeString t ++ ") "
 
-  printError :: String -> IO ()
-  printError = errorTemplate "Error"
+errorTemplate :: String -> String -> IO ()
+errorTemplate header msg = do
+  errorColor
+  putStr $ header ++ ": "
+  putStr normalColor
+  putStrLn msg
+  exitFailure
 
-  printWarning :: String -> IO ()
-  printWarning msg = do
-    warningColor
-    putStr "Warning: "
-    putStr normalColor
-    putStrLn msg
+printError :: String -> IO ()
+printError = errorTemplate "Error"
 
-  parsing :: String -> IO ()
-  parsing = errorTemplate "Parsing"
+printWarning :: String -> IO ()
+printWarning msg = do
+  warningColor
+  putStr "Warning: "
+  putStr normalColor
+  putStrLn msg
 
-  typecheck :: String -> IO ()
-  typecheck = errorTemplate "Typecheck"
+parsing :: String -> IO ()
+parsing = errorTemplate "Parsing"
 
-  runtime :: String -> IO ()
-  runtime = errorTemplate "Runtime"
+typecheck :: String -> IO ()
+typecheck = errorTemplate "Typecheck"
 
-  typecheckWarn :: String -> IO ()
-  typecheckWarn msg = printWarning $ "typecheck: " ++ msg
+runtime :: String -> IO ()
+runtime = errorTemplate "Runtime"
 
-  multipleFnDef :: Ident -> IO ()
-  multipleFnDef ident =
-    typecheck $ "multiple definitions of function " ++ identString ident
+typecheckWarn :: String -> IO ()
+typecheckWarn msg = printWarning $ "typecheck: " ++ msg
 
-  noMain :: IO ()
-  noMain = typecheck "there is no main function"
+multipleFnDef :: Ident -> IO ()
+multipleFnDef ident =
+  typecheck $ "multiple definitions of function " ++ identString ident
 
-  badMain :: IO ()
-  badMain = typecheck $ "main function has bad type, it " ++
-                        "should be " ++ typeString Void ++ " without arguments"
+noMain :: IO ()
+noMain = typecheck "there is no main function"
 
-  vRetNoVoid :: Type -> IO ()
-  vRetNoVoid t =
-    typecheck $ "return without value in function returning " ++ typeString t
+badMain :: IO ()
+badMain = typecheck $ "main function has bad type, it " ++
+                      "should be " ++ typeString Void ++ " without arguments"
 
-  retVoid :: Expr -> IO ()
-  retVoid e = typecheck $ "returning " ++ exprString e ++ " in void function"
+vRetNoVoid :: Type -> IO ()
+vRetNoVoid t =
+  typecheck $ "return without value in function returning " ++ typeString t
 
-  badRetType :: Expr -> Type -> Type -> IO ()
-  badRetType e t rt = typecheck $ "returning " ++ exprString e ++
-    typeOfString t ++ "in function returning " ++ typeString rt
+retVoid :: Expr -> IO ()
+retVoid e = typecheck $ "returning " ++ exprString e ++ " in void function"
 
-  expectedExpression :: Expr -> Type -> Type -> IO ()
-  expectedExpression e t expected = typecheck $ "expected expression of type " ++
-    typeString expected ++ " got " ++ exprString e ++ typeOfString t
+badRetType :: Expr -> Type -> Type -> IO ()
+badRetType e t rt = typecheck $ "returning " ++ exprString e ++
+  typeOfString t ++ "in function returning " ++ typeString rt
 
-  shadowTopDef :: Ident -> IO ()
-  shadowTopDef ident = typecheck $ "shadowing function " ++ identString ident
+expectedExpression :: Expr -> Type -> Type -> IO ()
+expectedExpression e t expected = typecheck $ "expected expression of type " ++
+  typeString expected ++ " got " ++ exprString e ++ typeOfString t
 
-  shadowVariable :: Ident -> IO ()
-  shadowVariable ident =
-    typecheckWarn $ "shadowing variable " ++ identString ident
+shadowTopDef :: Ident -> IO ()
+shadowTopDef ident = typecheck $ "shadowing function " ++ identString ident
 
-  variableUndeclared :: Ident -> IO ()
-  variableUndeclared ident = typecheck $ "variable " ++ identString ident
-    ++ " is undeclared"
+shadowVariable :: Ident -> IO ()
+shadowVariable ident =
+  typecheckWarn $ "shadowing variable " ++ identString ident
 
-  noInit :: Ident -> Bool -> IO ()
-  noInit ident isConst =
-    typecheck $ "declaring " ++
-      if isConst then "constant" else "variable with auto type" ++
-      " " ++ identString ident ++ " without init"
+variableUndeclared :: Ident -> IO ()
+variableUndeclared ident = typecheck $ "variable " ++ identString ident
+  ++ " is undeclared"
 
-  changingConst :: Ident -> IO ()
-  changingConst ident =
-    typecheck $ "you cannot change constant " ++ identString ident
+noInit :: Ident -> Bool -> IO ()
+noInit ident isConst =
+  typecheck $ "declaring " ++
+    if isConst then "constant" else "variable with auto type" ++
+    " " ++ identString ident ++ " without init"
 
-  diffTypesBinOp :: Type -> Type -> IO ()
-  diffTypesBinOp t1 t2 = typecheck $ "binary operation on different types: " ++
-    typeString t1 ++ " and " ++ typeString t2
+changingConst :: Ident -> IO ()
+changingConst ident =
+  typecheck $ "you cannot change constant " ++ identString ident
 
-  sameArgNames :: Ident -> IO ()
-  sameArgNames ident =
-    typecheck $ "duplicate argument name " ++ identString ident
+diffTypesBinOp :: String -> Type -> Type -> IO ()
+diffTypesBinOp op t1 t2 = typecheck $ op ++ " on different types: " ++
+  typeString t1 ++ " and " ++ typeString t2
 
-  nonNumeric :: Expr -> Type -> IO ()
-  nonNumeric expr t =
-    typecheck $ exprString expr ++ " is not numeric" ++ typeOfString t
+sameArgNames :: Ident -> IO ()
+sameArgNames ident =
+  typecheck $ "duplicate argument name " ++ identString ident
 
-  nonBoolean :: Expr -> IO ()
-  nonBoolean expr = typecheck $ exprString expr ++ " is not boolean"
+nonNumeric :: Expr -> Type -> IO ()
+nonNumeric expr t =
+  typecheck $ exprString expr ++ " is not numeric" ++ typeOfString t
 
-  nonIterable :: Expr -> Type -> IO ()
-  nonIterable expr t =
-    typecheck $ exprString expr ++ " is not iterable" ++ typeOfString t
+nonBoolean :: Expr -> IO ()
+nonBoolean expr = typecheck $ exprString expr ++ " is not boolean"
 
-  functionUndeclared :: Ident -> IO ()
-  functionUndeclared ident = typecheck $ "function " ++ identString ident ++
-    " is not declared in this scope"
+nonIterable :: Expr -> Type -> IO ()
+nonIterable expr t =
+  typecheck $ exprString expr ++ " is not iterable" ++ typeOfString t
 
-  notLambda :: Ident -> IO ()
-  notLambda ident = typecheck $ identString ident ++ " is not a lambda nor function"
+functionUndeclared :: Ident -> IO ()
+functionUndeclared ident = typecheck $ "function " ++ identString ident ++
+  " is not declared in this scope"
 
-  numberOfArgs :: Ident -> Int -> Int -> IO ()
-  numberOfArgs ident nArgs expected =
-    typecheck $ "function " ++ identString ident ++ " expected " ++
-    numString expected ++ " argument(s), " ++ numString nArgs ++ " given"
+notLambda :: Ident -> IO ()
+notLambda ident = typecheck $ identString ident ++ " is not a lambda nor function"
 
-  typesOfArgs :: Ident -> [Type] -> [Type] -> IO ()
-  typesOfArgs ident argsTypes types = typecheck $ "function " ++
-    identString ident ++ " args types are " ++ typesString types ++
-    ", trying to invoke function with args types " ++ typesString argsTypes
+numberOfArgs :: Ident -> Int -> Int -> IO ()
+numberOfArgs ident nArgs expected =
+  typecheck $ "function " ++ identString ident ++ " expected " ++
+  numString expected ++ " argument(s), " ++ numString nArgs ++ " given"
 
-  nonComparable :: Expr -> Type -> IO ()
-  nonComparable expr t = typecheck $ "expected iterable expression, got " ++
-    exprString expr ++ " which is" ++ typeOfString t
+typesOfArgs :: Ident -> [Type] -> [Type] -> IO ()
+typesOfArgs ident argsTypes types = typecheck $ "function " ++
+  identString ident ++ " args types are " ++ typesString types ++
+  ", trying to invoke function with args types " ++ typesString argsTypes
 
-  nonPrintable :: Expr -> Type -> IO ()
-  nonPrintable expr t = typecheck $ exprString expr ++ " is not printable" ++
-    typeOfString t
+nonComparable :: Expr -> Type -> IO ()
+nonComparable expr t = typecheck $ "expected iterable expression, got " ++
+  exprString expr ++ " which is" ++ typeOfString t
 
-  listDiffJoin :: Expr -> Expr -> Type -> Type -> IO ()
-  listDiffJoin a b ta tb =
-    typecheck $ "trying to join lists of different types " ++ exprString a ++
-    typeOfString ta ++ exprString b ++ typeOfString tb
+nonPrintable :: Expr -> Type -> IO ()
+nonPrintable expr t = typecheck $ exprString expr ++ " is not printable" ++
+  typeOfString t
 
-  nonListType :: Expr -> Type -> IO ()
-  nonListType e t = typecheck $ "expected list type, got " ++ exprString e ++
-    typeOfString t
+listDiffJoin :: Expr -> Expr -> Type -> Type -> IO ()
+listDiffJoin a b ta tb =
+  typecheck $ "trying to join lists of different types " ++ exprString a ++
+  typeOfString ta ++ exprString b ++ typeOfString tb
 
-  assert :: Expr -> IO ()
-  assert e = errorTemplate "Assert" $ "expression " ++ exprString e ++ " failed"
+nonListType :: Expr -> Type -> IO ()
+nonListType e t = typecheck $ "expected list type, got " ++ exprString e ++
+  typeOfString t
 
-  alreadyDecl :: Ident -> IO ()
-  alreadyDecl ident = typecheck $ identString ident ++
-    " is already declared in this scope"
+assert :: Expr -> IO ()
+assert e = errorTemplate "Assert" $ "expression " ++ exprString e ++ " failed"
 
-  divZero :: IO Integer
-  divZero = do
-    runtime $ "division by " ++ exprString (EInt 0)
-    return 0
+alreadyDecl :: Ident -> IO ()
+alreadyDecl ident = typecheck $ identString ident ++
+  " is already declared in this scope"
+
+divZero :: IO Integer
+divZero = do
+  runtime $ "division by " ++ exprString (EInt 0)
+  return 0
