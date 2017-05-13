@@ -1,7 +1,11 @@
 void main() {
     int x = 42;
-    if x > 50 {
+    if x < 50 {
+        x = 14;
         string x = "abc";
-        print(x);
+        assert(x == "abc");
     }
+    assert(x == 14);
+    x = 15;
+    assert(x == 15);
 }

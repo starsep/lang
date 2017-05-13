@@ -1,7 +1,0 @@
-int a() {
-    return 42;
-}
-
-void main() {
-    int x = a();
-}

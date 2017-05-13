@@ -1,0 +1,12 @@
+void main() {
+    print(false);
+    print(" ");
+    print('a');
+    print(" ");
+    print(3.1415);
+    print(" ");
+    print(42);
+    print(" ");
+    print("string");
+}
+

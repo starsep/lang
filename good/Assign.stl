@@ -1,3 +1,10 @@
 void main() {
-    int x = 42 + 8 * 5;
+    int x = 42;
+    assert(x == 42);
+    char c = 'a';
+    assert(c == 'a');
+    string s = "abc";
+    assert(s == "abc");
+    float p = 3.14;
+    assert(p == 3.14);
 }

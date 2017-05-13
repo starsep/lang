@@ -1,0 +1,5 @@
+void main() {
+    assert("abc" == char['a', 'b', 'c']);
+    assert("def" == 'd' $ 'e' $ 'f' $ char[]);
+    assert("qwerty" == "qwe" ++ "rt" ++ "y");
+}
