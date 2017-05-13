@@ -8,8 +8,20 @@ module Typecheck (typecheck) where
 
   type TypedFnDefs = Map.Map Ident Type
   type TCEnv = (TypedFnDefs, Type)
-  type TCState = Map.Map Ident (Bool, Type)
+  type TCVarState = Map.Map Ident (Bool, Type)
+  type TCDeclState = [Ident]
+  type TCState = (TCVarState, TCDeclState)
   type TCMonad = RWST TCEnv () TCState IO
+
+  getState :: TCMonad (Map.Map Ident (Bool, Type))
+  getState = do
+    (state, _) <- get
+    return state
+
+  putState :: Map.Map Ident (Bool, Type) -> TCMonad ()
+  putState newState = do
+    (_, l) <- get
+    put (newState, l)
 
   typeOf :: Expr -> TCMonad Type
   typeOf q =
@@ -73,7 +85,7 @@ module Typecheck (typecheck) where
 
   typeOfVar :: Ident -> TCMonad Type
   typeOfVar ident = do
-    state <- get
+    state <- getState
     assertVarDeclared ident
     let Just (_, t) = Map.lookup ident state
     return t
@@ -88,11 +100,11 @@ module Typecheck (typecheck) where
 
   typeOfLambda :: [Arg] -> Expr -> TCMonad Type
   typeOfLambda args expr = do
-    state <- get
+    state <- getState
     lambdaState <- lift $ foldM addFunctionArgToState state args
-    put lambdaState
+    putState lambdaState
     outType <- typeOf expr
-    put state
+    putState state
     return $ fnHeaderToFnType outType args
 
   checkBExprOp :: Expr -> Expr -> TCMonad Type
@@ -149,7 +161,7 @@ module Typecheck (typecheck) where
 
   outputTypeLambda :: Ident -> [Expr] -> TCMonad Type
   outputTypeLambda ident args = do
-    state <- get
+    state <- getState
     let Just (_, t) = Map.lookup ident state
     case t of
       FnType types -> checkArgs ident args types
@@ -166,7 +178,7 @@ module Typecheck (typecheck) where
   outputType :: Ident -> [Expr] -> TCMonad Type
   outputType ident args = do
     (typed, _) <- ask
-    state <- get
+    state <- getState
     if Map.member ident typed then
       outputTypeFun ident args
     else if Map.member ident state then
@@ -194,7 +206,7 @@ module Typecheck (typecheck) where
   checkShadow :: Ident -> TCMonad ()
   checkShadow ident = do
     (typed, _) <- ask
-    state <- get
+    state <- getState
     when (Map.member ident typed) $ lift $ Errors.shadowTopDef ident
     when (Map.member ident state) $ lift $ Errors.shadowVariable ident
 
@@ -205,12 +217,12 @@ module Typecheck (typecheck) where
 
   assertVarDeclared :: Ident -> TCMonad ()
   assertVarDeclared ident = do
-    state <- get
+    state <- getState
     when (Map.notMember ident state) $ lift $ Errors.variableUndeclared ident
 
   assertNonConst :: Ident -> TCMonad ()
   assertNonConst ident = do
-    state <- get
+    state <- getState
     assertVarDeclared ident
     let Just (isConst, _) = Map.lookup ident state
     when isConst $ lift $ Errors.changingConst ident
@@ -227,8 +239,8 @@ module Typecheck (typecheck) where
       Init ident expr -> do
         checkShadow ident
         assertType expr t
-    state <- get
-    put (Map.insert (itemIdent item) (False, t) state)
+    state <- getState
+    putState (Map.insert (itemIdent item) (False, t) state)
 
   typecheckIncr :: Ident -> TCMonad ()
   typecheckIncr ident = do
@@ -237,13 +249,13 @@ module Typecheck (typecheck) where
 
   typecheckAuto :: Item -> Bool -> TCMonad()
   typecheckAuto item isConst = do
-    state <- get
+    state <- getState
     let ident = itemIdent item
     checkShadow ident
     when (item == NoInit ident) $ lift $ Errors.noInit ident isConst
     let (Init _ expr) = item
     t <- typeOf expr
-    put (Map.insert ident (isConst, t) state)
+    putState (Map.insert ident (isConst, t) state)
 
   typecheckAss :: Ident -> AssOp -> Expr -> TCMonad ()
   typecheckAss ident assOp expr = do
@@ -342,7 +354,7 @@ module Typecheck (typecheck) where
   typecheckBlock (Block stmts) =
     forM_ stmts typecheckStmt
 
-  addFunctionArgToState :: TCState -> Arg -> IO TCState
+  addFunctionArgToState :: TCVarState -> Arg -> IO TCVarState
   addFunctionArgToState state (Arg t arg) = do
     when (Map.member arg state) $ Errors.sameArgNames arg
     return $ Map.insert arg (False, t) state
@@ -350,7 +362,7 @@ module Typecheck (typecheck) where
   typecheckFunction :: FnDef -> TypedFnDefs -> IO ()
   typecheckFunction (FnDef outType _ args body) typed = do
     funState <- foldM addFunctionArgToState Map.empty args
-    void $ runRWST (typecheckBlock body) (typed, outType) funState
+    void $ runRWST (typecheckBlock body) (typed, outType) (funState, [])
 
   typecheck :: Program -> IO ()
   typecheck (Program fns) = do
