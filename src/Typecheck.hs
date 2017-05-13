@@ -13,15 +13,26 @@ module Typecheck (typecheck) where
   type TCState = (TCVarState, TCDeclState)
   type TCMonad = RWST TCEnv () TCState IO
 
-  getState :: TCMonad (Map.Map Ident (Bool, Type))
+  getState :: TCMonad TCVarState
   getState = do
-    (state, _) <- get
-    return state
+    (s, _) <- get
+    return s
 
-  putState :: Map.Map Ident (Bool, Type) -> TCMonad ()
+  putState :: TCVarState -> TCMonad ()
   putState newState = do
-    (_, l) <- get
-    put (newState, l)
+    decl <- getDecl
+    put (newState, decl)
+
+  getDecl :: TCMonad TCDeclState
+  getDecl = do
+    (_, decl) <- get
+    return decl
+
+  addDecl :: Ident -> TCMonad ()
+  addDecl ident = do
+    (s, decl) <- get
+    when (ident `elem` decl) $ lift $ Errors.alreadyDecl ident
+    put (s, ident : decl)
 
   typeOf :: Expr -> TCMonad Type
   typeOf q =
@@ -234,12 +245,13 @@ module Typecheck (typecheck) where
 
   typecheckDecl :: Item -> Type -> TCMonad ()
   typecheckDecl item t = do
+    let ident = itemIdent item
     case item of
-      NoInit ident -> checkShadow ident
-      Init ident expr -> do
-        checkShadow ident
-        assertType expr t
+      NoInit _ -> return ()
+      Init _ expr -> assertType expr t
     state <- getState
+    addDecl ident
+    checkShadow ident
     putState (Map.insert (itemIdent item) (False, t) state)
 
   typecheckIncr :: Ident -> TCMonad ()
