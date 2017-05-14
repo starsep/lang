@@ -4,13 +4,13 @@ import AbsStarsepLang
 import Control.Monad
 import Control.Monad.RWS (RWST, ask, get, put, lift, runRWST)
 import qualified Data.Map as Map
-import Data.Map ((!))
+import Data.Map (Map, (!))
 import qualified Errors
 import PrintStarsepLang (printTree)
 
-type TypedFnDefs = Map.Map Ident Type
+type TypedFnDefs = Map Ident Type
 type TCEnv = (TypedFnDefs, Type)
-type TCIdentState = Map.Map Ident (Bool, Type)
+type TCIdentState = Map Ident (Bool, Type)
 type TCDeclState = [Ident]
 type TCState = (TCIdentState, TCDeclState)
 type TCMonad = RWST TCEnv () TCState IO
