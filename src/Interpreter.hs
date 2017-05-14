@@ -9,7 +9,6 @@ import qualified Data.Map as Map
 import Data.Maybe
 import qualified Errors
 import Numeric
-import PrintStarsepLang (printTree)
 
 type Loc = Int
 type IEnv = Map Ident FnDef
@@ -220,10 +219,9 @@ transAssOp x ident expr =
 
 getFunVar :: Ident -> IMonad FnDef
 getFunVar ident = do
-  state <- getState
   f <- getValue ident
   case f of
-    EVar ident -> getFun ident
+    EVar fIdent -> getFun fIdent
     _ -> error $ "no function var " ++ show ident ++ ", error in typechecker"
 
 getFun :: Ident -> IMonad FnDef
