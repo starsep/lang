@@ -1,7 +1,7 @@
 module Interpreter (interpret) where
 
 import AbsStarsepLang
-import Control.Exception.Base
+import Control.Exception.Base (catch, ArithException(DivideByZero), evaluate)
 import Control.Monad
 import Control.Monad.RWS (RWST, get, put, lift, ask, runRWST)
 import Data.Map (Map, (!))
