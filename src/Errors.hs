@@ -54,9 +54,6 @@ errorTemplate header msg = do
   putStrLn msg
   exitFailure
 
-printError :: String -> IO ()
-printError = errorTemplate "Error"
-
 printWarning :: String -> IO ()
 printWarning msg = do
   warningColor
