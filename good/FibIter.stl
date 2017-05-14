@@ -1,5 +1,5 @@
 list<int> range(int n) {
-    if (n <= 0) {
+    if (n <= 1) {
         return int[];
     } else {
         n--;
@@ -9,7 +9,7 @@ list<int> range(int n) {
 
 int fib(int n) {
     int x = 0, y = 1;
-    for i in range(n) {
+    for i in range(n + 1) {
         int sum = x + y;
         x = y;
         y = sum;
@@ -18,6 +18,9 @@ int fib(int n) {
 }
 
 void main() {
-    let n = 9;
-    print(fib(n));
+    assert(fib(0) == 1);
+    assert(fib(1) == 1);
+    assert(fib(2) == 2);
+    assert(fib(8) == 34);
+    assert(fib(9) == 55);
 }
