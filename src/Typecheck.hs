@@ -402,7 +402,7 @@ isReturningOper oper = case oper of
 isReturningIfStmt :: IfStmt -> Bool
 isReturningIfStmt ifStmt = case ifStmt of
   IfStmt _ b -> isReturning $ BStmt b
-  IfElifStmt ifStmt _ b -> isReturning (BStmt b) && isReturningIfStmt ifStmt
+  IfElifStmt iS _ b -> isReturning (BStmt b) && isReturningIfStmt iS
 
 isReturningElseStmt :: IfElseStmt -> Bool
 isReturningElseStmt (IfElseStmt ifStmt b) =

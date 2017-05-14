@@ -45,7 +45,7 @@ genFnState :: [(Arg, Expr)] -> IState
 genFnState = foldr addArgToState initState
 
 execFun :: FnDef -> [Expr] -> IMonad IReturn
-execFun (FnDef type_ ident args block) es = do
+execFun (FnDef _ _ args block) es = do
   state <- get
   exprs <- forM es eval
   put $ genFnState $ zip args exprs
@@ -214,6 +214,7 @@ transDecl t item =
 
 transLet :: Item -> IMonad ()
 transLet (Init ident expr) = declare ident expr
+transLet _ = fail "let without init, error in typechecker"
 
 transAssOp :: AssOp -> Ident -> Expr -> Expr
 transAssOp x ident expr =
@@ -282,6 +283,7 @@ eval x =
       case e of
         EInt i -> return $ EInt (-i)
         EFloat f -> return $ EFloat (-f)
+        _ -> fail "ENeg on non-numerical value, error in typechecker"
     ENot expr -> do
       b <- eval expr
       return $ toEBool $ b == EFalse
@@ -366,6 +368,7 @@ transMathExpr expr1 expr2 fni fnf = do
       r <- lift $ tryIntOp i1 i2 fni `catch` divZeroHandler
       return $ EInt r
     (EFloat f1, EFloat f2) -> return $ EFloat $ f1 `fnf` f2
+    _ -> fail "transMathExpr on bad expr types, error in typechecker"
 
 transAddOp :: Num a => AddOp -> (a -> a -> a)
 transAddOp x = case x of
