@@ -4,7 +4,7 @@ import AbsStarsepLang
 import Control.Exception.Base
 import Control.Monad
 import Control.Monad.State (StateT, get, put, lift, runStateT)
-import Data.Map ((!))
+import Data.Map (Map, (!))
 import qualified Data.Map as Map
 import Data.Maybe
 import qualified Errors
@@ -12,9 +12,9 @@ import Numeric
 import PrintStarsepLang (printTree)
 
 type Loc = Int
-type IEnv = Map.Map Ident Loc
-type IVarState = Map.Map Loc Expr
-type IShadowed = Map.Map Ident Loc
+type IEnv = Map Ident Loc
+type IVarState = Map Loc Expr
+type IShadowed = Map Ident Loc
 type IState = (Loc, IEnv, IVarState, IShadowed)
 type IMonad = StateT IState IO
 
@@ -31,7 +31,7 @@ addFnToState (FnDef _ ident args _) (loc, env, state, s) =
   (loc + 1, newEnv, newState, s)
 
 initState :: [FnDef] -> IState
-initState fns = foldr addFnToState (0, Map.empty, Map.empty, Map.empty) fns
+initState = foldr addFnToState (0, Map.empty, Map.empty, Map.empty)
 
 interpret :: Program -> IO ()
 interpret (Program fns) = do
@@ -87,11 +87,14 @@ evalCond e = do
   t <- eval e
   return $ t == ETrue
 
-headList :: Expr -> IMonad (Maybe Expr)
-headList expr = do
+listSplit :: Expr -> IMonad (Maybe Expr, [Expr], Type)
+listSplit expr = do
   e <- eval expr
-  let (EList _ l) = e
-  return $ listToMaybe l
+  let (EList t l) = e
+  if null l then
+    return (Nothing, [], Void)
+  else
+    return (Just $ head l, tail l, t)
 transStmt :: Stmt -> IMonad ()
 transStmt x = case x of
   BStmt block -> transBlock block
@@ -104,9 +107,11 @@ transStmt x = case x of
   For oper1 expr oper2 (Block s) -> do
     let body = Block $ s ++ [OperStmt oper2]
     transBlock $ Block [OperStmt oper1, While expr body]
-  Foreach ident expr block -> do
-    first <- headList expr
-    when (isJust first) $ transOper (Auto [Init ident (fromJust first)])
+  Foreach ident expr b@(Block stms) -> do
+    (h, ta, t) <- listSplit expr
+    when (isJust h) $ do
+      transBlock $ Block (OperStmt (Auto [Init ident (fromJust h)]) : stms)
+      transStmt $ Foreach ident (EList t ta) b
   Loop block -> transStmt $ While ETrue block
   CondIf ifstmt -> void $ transIfStmt ifstmt
   ElseStmt ifelsestmt -> transIfElseStmt ifelsestmt
@@ -216,14 +221,16 @@ toEBool q = if q then ETrue else EFalse
 eval :: Expr -> IMonad Expr
 eval x =
   case x of
-    EList type_ exprs -> return x
+    EList t exprs -> do
+      l <- mapM eval exprs
+      return $ EList t l
     EVar ident -> do
       state <- getState
       loc <- getLoc ident
       return $ state ! loc
-    EInt integer -> return x
-    EChar char -> return x
-    EFloat double -> return x
+    EInt _ -> return x
+    EChar _ -> return x
+    EFloat _ -> return x
     EString string -> return $ EList Char $ map EChar string
     EFalse -> return x
     ETrue -> return x
@@ -275,7 +282,10 @@ eval x =
         eval expr2
       else
         eval expr3
-    Lambda args expr -> fail $ show x
+    Lambda args expr -> evalLambda args expr
+
+evalLambda :: [Arg] -> Expr -> IMonad Expr
+evalLambda args expr = return $ Lambda args expr
 
 transFunExec :: FunExec -> IMonad ()
 transFunExec x@(FunExec ident exprs) = failure x
@@ -314,9 +324,6 @@ transMathExpr expr1 expr2 fni fnf = do
       r <- lift $ tryIntOp i1 i2 fni `catch` divZeroHandler
       return $ EInt r
     (EFloat f1, EFloat f2) -> return $ EFloat $ f1 `fnf` f2
-
-floatExpr :: Expr -> Double
-floatExpr (EFloat f) = f
 
 transAddOp :: Num a => AddOp -> (a -> a -> a)
 transAddOp x = case x of
