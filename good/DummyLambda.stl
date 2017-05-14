@@ -1,0 +1,4 @@
+void main() {
+    fn<int -> int -> int -> int -> int> x;
+    assert(x(1, 2, 3, 42) == 0);
+}
