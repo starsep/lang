@@ -1,0 +1,12 @@
+list<int> range(int n) {
+    if (n <= 1) {
+        return int[];
+    } else {
+        n--;
+        return n $ range(n);
+    }
+}
+
+void main() {
+    print(range(4));
+}

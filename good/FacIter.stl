@@ -1,5 +1,5 @@
 list<int> range(int n) {
-    if (n <= 0) {
+    if (n <= 1) {
         return int[];
     } else {
         n--;
@@ -9,7 +9,7 @@ list<int> range(int n) {
 
 int factorial(int n) {
     int result = 1;
-    for i in range(n) {
+    for i in range(n + 1) {
         result *= i;
     }
     return result;

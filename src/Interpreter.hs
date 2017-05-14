@@ -33,7 +33,7 @@ interpret :: Program -> IO ()
 interpret (Program fns) = do
   let env = initEnv fns
       main = env ! Ident "main"
-  void $ runRWST (transFnDef main []) (initEnv fns) initState
+  void $ runRWST (execFun main []) (initEnv fns) initState
 
 addArgToState :: (Arg, Expr) -> IState -> IState
 addArgToState (Arg _ ident, e) (loc, iS, vS, s, r) =
@@ -44,18 +44,26 @@ addArgToState (Arg _ ident, e) (loc, iS, vS, s, r) =
 genFnState :: [(Arg, Expr)] -> IState
 genFnState = foldr addArgToState initState
 
-transFnDef :: FnDef -> [Expr] -> IMonad ()
-transFnDef (FnDef type_ ident args block) es = do
+execFun :: FnDef -> [Expr] -> IMonad IReturn
+execFun (FnDef type_ ident args block) es = do
   state <- get
   exprs <- forM es eval
   put $ genFnState $ zip args exprs
   transBlock block
+  (q, ret) <- getReturn
+  eret <- eval ret
   put state
+  return (q, eret)
+
+transStmtWrapper :: Stmt -> IMonad ()
+transStmtWrapper stmt = do
+  (r, _) <- getReturn
+  unless r $ transStmt stmt
 
 transBlock :: Block -> IMonad ()
 transBlock (Block stmts) = do
   oldShadowed <- getShadowed
-  forM_ stmts transStmt
+  forM_ stmts transStmtWrapper
   env <- getIdentState
   shadowed <- getShadowed
   putShadowed oldShadowed
@@ -149,7 +157,7 @@ execPrint expr = do
     ETrue -> lift $ putStr $ show True
     EFalse -> lift $ putStr $ show False
     EList _ l -> execPrintList l
-    _ -> fail "print :<"
+    _ -> fail $ show value
 
 execAssert :: Expr -> IMonad ()
 execAssert expr = do
@@ -237,7 +245,7 @@ transOper x = case x of
   VRet -> transOper $ Ret EFalse
   FnExec (FunExec ident args) -> do
     f <- getFun ident
-    transFnDef f args
+    void $ execFun f args
   Print expr -> execPrint expr
   Assert expr -> execAssert expr
 
@@ -316,6 +324,10 @@ eval x =
       else
         eval expr3
     Lambda args expr -> evalLambda args expr
+    EFunExec (FunExec ident args) -> do
+      f <- getFun ident
+      (_, e) <- execFun f args
+      return e
 
 evalLambda :: [Arg] -> Expr -> IMonad Expr
 evalLambda args expr = return $ Lambda args expr
