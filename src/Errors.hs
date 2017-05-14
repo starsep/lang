@@ -11,13 +11,14 @@ import PrintStarsepLang
 import Data.Char
 import Data.List
 import System.Exit
+import System.IO (stderr, hPutStr, hPutStrLn)
 
 escapeChar :: Char
 escapeChar = chr 27
 errorColor :: IO ()
-errorColor = putStr $ escapeChar : "[31;1m"
+errorColor = hPutStr stderr $ escapeChar : "[31;1m"
 warningColor :: IO ()
-warningColor = putStr $ escapeChar : "[33;1m"
+warningColor = hPutStr stderr $ escapeChar : "[33;1m"
 normalColor :: String
 normalColor = escapeChar : "[0m"
 typeColor :: String
@@ -49,17 +50,17 @@ typeOfString t =
 errorTemplate :: String -> String -> IO ()
 errorTemplate header msg = do
   errorColor
-  putStr $ header ++ ": "
-  putStr normalColor
-  putStrLn msg
+  hPutStr stderr $ header ++ ": "
+  hPutStr stderr normalColor
+  hPutStrLn stderr msg
   exitFailure
 
 printWarning :: String -> IO ()
 printWarning msg = do
   warningColor
-  putStr "Warning: "
-  putStr normalColor
-  putStrLn msg
+  hPutStr stderr "Warning: "
+  hPutStr stderr normalColor
+  hPutStrLn stderr msg
 
 parsing :: String -> IO ()
 parsing = errorTemplate "Parsing"
