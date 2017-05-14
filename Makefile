@@ -12,7 +12,7 @@ BNFC_SOURCES_FILES=AbsStarsepLang.hs ErrM.hs LexStarsepLang.hs \
 	ParStarsepLang.hs PrintStarsepLang.hs TestStarsepLang.hs
 BNFC_SOURCES=$(addprefix $(BUILD)/,$(BNFC_SOURCES_FILES))
 
-.PHONY: all clean docs test testGood testBad testWarn run runWarn runBad runGood
+.PHONY: all clean docs pack test testGood testBad testWarn run runWarn runBad runGood
 
 all: $(BINARIES)
 
@@ -86,5 +86,10 @@ docs/DocStarsepLang.pdf: $(BUILD)/DocStarsepLang.tex
 	latexmk -pdf -pdflatex="pdflatex -interaction=nonstopmode" -use-make -outdir=$(TMP) $< && \
 	mv $(TMP)/DocStarsepLang.pdf $@
 
+pack: clean
+	mkdir Filip_Czaplicki
+	cp -r bad good warn src docs Makefile grammar *.md Filip_Czaplicki
+	zip -ry9 Filip_Czaplicki.zip Filip_Czaplicki
+
 clean:
-	rm -rf $(BUILD) $(TMP) $(BINARIES)
+	rm -rf $(BUILD) $(TMP) $(BINARIES) Filip_Czaplicki *.zip
