@@ -4,6 +4,7 @@ import AbsStarsepLang
 import Control.Exception.Base
 import Control.Monad
 import Control.Monad.State (StateT, get, put, lift, runStateT)
+import Control.Monad.Reader (ReaderT)
 import Data.Map (Map, (!))
 import qualified Data.Map as Map
 import Data.Maybe
@@ -12,10 +13,11 @@ import Numeric
 import PrintStarsepLang (printTree)
 
 type Loc = Int
-type IEnv = Map Ident Loc
+type IIdentState = Map Ident Loc
 type IVarState = Map Loc Expr
 type IShadowed = Map Ident Loc
-type IState = (Loc, IEnv, IVarState, IShadowed)
+type IReturn = (Bool, Expr)
+type IState = (Loc, IIdentState, IVarState, IShadowed, IReturn)
 type IMonad = StateT IState IO
 
 failure :: Show a => a -> IMonad ()
@@ -25,13 +27,14 @@ isMain :: FnDef -> Bool
 isMain (FnDef _ (Ident name) _ _) = name == "main"
 
 addFnToState :: FnDef -> IState -> IState
-addFnToState (FnDef _ ident args _) (loc, env, state, s) =
+addFnToState (FnDef _ ident args _) (loc, env, state, s, r) =
   let newEnv = env --Map.insert ident loc
       newState = state in --Map.insert loc
-  (loc + 1, newEnv, newState, s)
+  (loc + 1, newEnv, newState, s, r)
 
 initState :: [FnDef] -> IState
-initState = foldr addFnToState (0, Map.empty, Map.empty, Map.empty)
+initState =
+  foldr addFnToState (0, Map.empty, Map.empty, Map.empty, (False, EFalse))
 
 interpret :: Program -> IO ()
 interpret (Program fns) = do
@@ -47,40 +50,50 @@ transBlock :: Block -> IMonad ()
 transBlock (Block stmts) = do
   oldShadowed <- getShadowed
   forM_ stmts transStmt
-  env <- ask
+  env <- getIdentState
   shadowed <- getShadowed
   putShadowed oldShadowed
-  putEnv $ Map.union shadowed env
+  putIdentState $ Map.union shadowed env
 
-ask :: IMonad IEnv
-ask = do
-  (_, env, _, _) <- get
-  return env
-
-getShadowed :: IMonad IShadowed
-getShadowed = do
-  (_, _, _, shadowed) <- get
-  return shadowed
+getIdentState :: IMonad IIdentState
+getIdentState = do
+  (_, ident, _, _, _) <- get
+  return ident
 
 getState :: IMonad IVarState
 getState = do
-  (_, _, state, _) <- get
+  (_, _, state, _, _) <- get
   return state
+
+getShadowed :: IMonad IShadowed
+getShadowed = do
+  (_, _, _, shadowed, _) <- get
+  return shadowed
+
+getReturn :: IMonad IReturn
+getReturn = do
+  (_, _, _, _, ret) <- get
+  return ret
+
+putIdentState :: IIdentState -> IMonad ()
+putIdentState iState = do
+  (loc, _, state, shadowed, r) <- get
+  put (loc, iState, state, shadowed, r)
 
 putState :: IVarState -> IMonad ()
 putState newState = do
-  (loc, env, _, s) <- get
-  put (loc, env, newState, s)
-
-putEnv :: IEnv -> IMonad ()
-putEnv env = do
-  (loc, _, state, shadowed) <- get
-  put (loc, env, state, shadowed)
+  (loc, iState, _, s, r) <- get
+  put (loc, iState, newState, s, r)
 
 putShadowed :: IShadowed -> IMonad ()
 putShadowed shadowed = do
-  (loc, env, state, _) <- get
-  put (loc, env, state, shadowed)
+  (loc, iState, state, _, r) <- get
+  put (loc, iState, state, shadowed, r)
+
+putReturn :: IReturn -> IMonad ()
+putReturn ret = do
+  (loc, iState, state, shadowed, _) <- get
+  put (loc, iState, state, shadowed, ret)
 
 evalCond :: Expr -> IMonad Bool
 evalCond e = do
@@ -154,7 +167,7 @@ defaultValue t = case t of
   ListT ty -> EList ty []
   FnType types ->
     let output = last types
-        args = dummyLambdaArgs $ take (length types - 1) types
+        args = dummyLambdaArgs $ init types
         expr = defaultValue output in
     Lambda args expr
   Void -> EFalse
@@ -162,8 +175,8 @@ defaultValue t = case t of
 
 getLoc :: Ident -> IMonad Loc
 getLoc ident = do
-  env <- ask
-  return $ env ! ident
+  iState <- getIdentState
+  return $ iState ! ident
 
 assign :: Ident -> Expr -> IMonad ()
 assign ident expr = do
@@ -175,9 +188,9 @@ assign ident expr = do
 declare :: Ident -> Expr -> IMonad ()
 declare ident e = do
   expr <- eval e
-  (loc, env, state, _) <- get
-  let newShadowed = if Map.member ident env then Map.insert ident (env ! ident) env else env
-  put (loc + 1, Map.insert ident loc env, Map.insert loc expr state, newShadowed)
+  (loc, iS, state, _, r) <- get
+  let newShadowed = if Map.member ident iS then Map.insert ident (iS ! ident) iS else iS
+  put (loc + 1, Map.insert ident loc iS, Map.insert loc expr state, newShadowed, r)
 
 transDecl :: Type -> Item -> IMonad ()
 transDecl t item =
