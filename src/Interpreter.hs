@@ -3,7 +3,7 @@ module Interpreter (interpret) where
 import AbsStarsepLang
 import Control.Exception.Base
 import Control.Monad
-import Control.Monad.RWS (RWST, get, put, lift, runRWST)
+import Control.Monad.RWS (RWST, get, put, lift, ask, runRWST)
 import Data.Map (Map, (!))
 import qualified Data.Map as Map
 import Data.Maybe
@@ -221,14 +221,19 @@ transOper x = case x of
     assign ident e
   Incr ident -> transOper $ Ass ident PlusAss $ EInt 1
   Decr ident -> transOper $ Ass ident MinusAss $ EInt 1
-  Ret expr -> failure x
-  VRet -> failure x
+  Ret expr -> putReturn (True, expr)
+  VRet -> transOper $ Ret EFalse
   FnExec funexec -> failure x
   Print expr -> execPrint expr
   Assert expr -> execAssert expr
 
 toEBool :: Bool -> Expr
 toEBool q = if q then ETrue else EFalse
+
+isFun :: Ident -> IMonad Bool
+isFun ident = do
+  env <- ask
+  return $ Map.member ident env
 
 eval :: Expr -> IMonad Expr
 eval x =
@@ -237,9 +242,13 @@ eval x =
       l <- mapM eval exprs
       return $ EList t l
     EVar ident -> do
-      state <- getState
-      loc <- getLoc ident
-      return $ state ! loc
+      funVar <- isFun ident
+      if funVar then
+        return $ EVar ident
+      else do
+        state <- getState
+        loc <- getLoc ident
+        return $ state ! loc
     EInt _ -> return x
     EChar _ -> return x
     EFloat _ -> return x
@@ -253,9 +262,7 @@ eval x =
         EFloat f -> return $ EFloat (-f)
     ENot expr -> do
       b <- eval expr
-      case b of
-        ETrue -> return EFalse
-        EFalse -> return ETrue
+      return $ toEBool $ b == EFalse
     EMul expr1 mulop expr2 ->
       let i = transMulOpI mulop
           f = transMulOpF mulop in
