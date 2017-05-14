@@ -80,8 +80,6 @@ typeOf q =
       t <- typeOf e1
       assertType e2 t
       return t
-    Lambda args expr -> typeOfLambda args expr
-
 
 listType :: Expr -> TCMonad Type
 listType expr = do
@@ -111,15 +109,6 @@ typeOfIdent ident = do
     typeOfFun ident
   else
     typeOfVar ident
-
-typeOfLambda :: [Arg] -> Expr -> TCMonad Type
-typeOfLambda args expr = do
-  state <- getState
-  lambdaState <- lift $ foldM addFunctionArgToState state args
-  putState lambdaState
-  outType <- typeOf expr
-  putState state
-  return $ fnHeaderToFnType outType args
 
 checkBExprOp :: Expr -> Expr -> TCMonad Type
 checkBExprOp b1 b2 = do
@@ -173,20 +162,16 @@ checkArgs ident args t = do
   when (argsTypes /= types) $ lift $ Errors.typesOfArgs ident argsTypes types
   return $ last t
 
-outputTypeLambda :: Ident -> [Expr] -> TCMonad Type
-outputTypeLambda ident args = do
-  state <- getState
-  let (_, t) = state ! ident
-  case t of
-    FnType types -> checkArgs ident args types
-    _ -> do
-      lift $ Errors.notLambda ident
-      return Int
-
 outputTypeFun :: Ident -> [Expr] -> TCMonad Type
 outputTypeFun ident args = do
   (typed, _) <- ask
   let (FnType types) = typed ! ident
+  checkArgs ident args types
+
+outputTypeVarFun :: Ident -> [Expr] -> TCMonad Type
+outputTypeVarFun ident args = do
+  (state, _) <- get
+  let (_, FnType types) = state ! ident
   checkArgs ident args types
 
 outputType :: Ident -> [Expr] -> TCMonad Type
@@ -196,7 +181,7 @@ outputType ident args = do
   if Map.member ident typed then
     outputTypeFun ident args
   else if Map.member ident state then
-    outputTypeLambda ident args
+    outputTypeVarFun ident args
   else do
     _ <- lift $ Errors.functionUndeclared ident
     return Int

@@ -6,7 +6,7 @@ layout: default
 starsep-lang is language created for course Programming Languages and
 Paradigms at [University of Warsaw](https://mimuw.edu.pl/en) by me, [Filip &lt;starsep&gt; Czaplicki](https://starsep.com).
 
-Language site is at https://starsep.com/lang.
+Language site is at [https://starsep.com/lang](https://starsep.com/lang).
 
 You can find task description (in Polish) [here](https://starsep.com/lang/task.pdf).
 
@@ -20,7 +20,7 @@ Latest [grammar](https://starsep.com/lang/StarsepLang.cf) in [BNFC](https://gith
 Latest [BNFC](https://github.com/BNFC/bnfc)-generated grammar documentation: [HTML](https://starsep.com/lang/DocStarsepLang.html)/[PDF](https://starsep.com/lang/DocStarsepLang.pdf).
 
 # Building
-Find out how to build project [here](https://starsep.com/lang/BUIDING.html).
+Find out how to build project [here](https://starsep.com/lang/BUILDING.html).
 
 # Source code
-Project repository is at https://github.com/starsep/lang.
+Project repository is at [https://github.com/starsep/lang](https://github.com/starsep/lang).

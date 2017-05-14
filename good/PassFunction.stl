@@ -1,0 +1,26 @@
+void foo() {
+    print("Calling foo\n");
+}
+
+void printFoo(fn<void> b) {
+    b();
+}
+
+
+int sum(int x, int y) {
+    return x + y;
+}
+
+int mod(int x, int y) {
+    return x % y;
+}
+
+int a(int x, int y, fn<int -> int -> int> fun) {
+    return fun(x, y);
+}
+
+void main() {
+    printFoo(foo);
+    assert(a(10, 5, sum) == 15);
+    assert(a(12, 8, mod) == 4);
+}

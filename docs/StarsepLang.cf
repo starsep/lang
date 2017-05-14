@@ -85,10 +85,6 @@ ETernary.     Expr  ::= Expr1 "?" Expr1 ":" Expr1 ;
 coercions     Expr 8 ;
 separator     Expr "," ;
 
--- Lambdas -------------------------------------------------
-
-Lambda.       Expr ::= "@" "(" [Arg] ")" "->" Expr ;
-
 -- Operators -----------------------------------------------
 
 Plus.         AddOp ::= "+" ;

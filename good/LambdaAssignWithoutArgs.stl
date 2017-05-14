@@ -1,4 +1,0 @@
-void main() {
-    fn<int> x = @() -> 42;
-    print(x());
-}

@@ -164,13 +164,6 @@ execAssert expr = do
   b <- eval expr
   when (b /= ETrue) $ lift $ Errors.assert expr
 
-dummyArg :: Type -> (Int, [Arg]) -> (Int, [Arg])
-dummyArg t (i, args) = (i + 1, Arg t (Ident name) : args) where
-  name = "dummyArg" ++ show i ++ printTree t
-
-dummyLambdaArgs :: [Type] -> [Arg]
-dummyLambdaArgs types = let (_, res) = foldr dummyArg (0, []) types in res
-
 defaultValue :: Type -> Expr
 defaultValue t = case t of
   Int -> EInt 0
@@ -179,12 +172,8 @@ defaultValue t = case t of
   Bool -> EFalse
   Float -> EFloat 0.0
   ListT ty -> EList ty []
-  FnType types ->
-    let output = last types
-        args = dummyLambdaArgs $ init types
-        expr = defaultValue output in
-    Lambda args expr
   Void -> EFalse
+  FnType _ -> error "no default value for function, error in typechecker"
 
 
 getLoc :: Ident -> IMonad Loc
@@ -227,10 +216,21 @@ transAssOp x ident expr =
     DivAss -> EMul varExp Div expr
     ModAss -> EMul varExp Mod expr
 
+
+
+getFunVar :: Ident -> IMonad FnDef
+getFunVar ident = do
+  state <- getState
+  f <- getValue ident
+  case f of
+    EVar ident -> getFun ident
+    _ -> error $ "no function var " ++ show ident ++ ", error in typechecker"
+
 getFun :: Ident -> IMonad FnDef
 getFun ident = do
   env <- ask
-  return $ env ! ident
+  fun <- isFun ident
+  if fun then return $ env ! ident else getFunVar ident
 
 transOper :: Oper -> IMonad ()
 transOper x = case x of
@@ -258,6 +258,12 @@ isFun ident = do
   env <- ask
   return $ Map.member ident env
 
+getValue :: Ident -> IMonad Expr
+getValue ident = do
+  state <- getState
+  loc <- getLoc ident
+  return $ state ! loc
+
 eval :: Expr -> IMonad Expr
 eval x =
   case x of
@@ -268,10 +274,7 @@ eval x =
       funVar <- isFun ident
       if funVar then
         return $ EVar ident
-      else do
-        state <- getState
-        loc <- getLoc ident
-        return $ state ! loc
+      else getValue ident
     EInt _ -> return x
     EChar _ -> return x
     EFloat _ -> return x
@@ -325,14 +328,10 @@ eval x =
         eval expr2
       else
         eval expr3
-    Lambda args expr -> evalLambda args expr
     EFunExec (FunExec ident args) -> do
       f <- getFun ident
       (_, e) <- execFun f args
       return e
-
-evalLambda :: [Arg] -> Expr -> IMonad Expr
-evalLambda args expr = return $ Lambda args expr
 
 transIfStmt :: IfStmt -> IMonad Bool
 transIfStmt x = case x of

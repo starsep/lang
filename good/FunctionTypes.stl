@@ -10,5 +10,9 @@ void main() {
     fn<void> bar1 = foo1;
     fn<int -> void> bar2 = foo2;
     fn<int> bar3 = foo3;
+    assert(foo3() == 42);
+    assert(bar3() == 42);
+    fn<int> abc = bar3;
+    assert(abc() == 42);
     fn<int -> int -> int> bar4 = foo4;
 }

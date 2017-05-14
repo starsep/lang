@@ -1,4 +1,0 @@
-void main() {
-    fn<int -> int -> int> a = @(int x, int y) -> 42 * x + y;
-    print(a(42, 12));
-}
