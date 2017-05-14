@@ -35,10 +35,22 @@ interpret (Program fns) = do
       main = env ! Ident "main"
   void $ runRWST (transFnDef main []) (initEnv fns) initState
 
+addArgToState :: (Arg, Expr) -> IState -> IState
+addArgToState (Arg _ ident, e) (loc, iS, vS, s, r) =
+  (loc + 1, identState, varState, s, r) where
+    identState = Map.insert ident loc iS
+    varState = Map.insert loc e vS
+
+genFnState :: [(Arg, Expr)] -> IState
+genFnState = foldr addArgToState initState
+
 transFnDef :: FnDef -> [Expr] -> IMonad ()
-transFnDef (FnDef type_ ident args block) es =
-  -- TODO: set args values
+transFnDef (FnDef type_ ident args block) es = do
+  state <- get
+  exprs <- forM es eval
+  put $ genFnState $ zip args exprs
   transBlock block
+  put state
 
 transBlock :: Block -> IMonad ()
 transBlock (Block stmts) = do
