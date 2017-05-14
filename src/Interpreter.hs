@@ -116,8 +116,8 @@ transStmt x = case x of
   CondIf ifstmt -> void $ transIfStmt ifstmt
   ElseStmt ifelsestmt -> transIfElseStmt ifelsestmt
 
-execPrintList :: Type -> [Expr] -> IMonad ()
-execPrintList t l = forM_ l execPrint
+execPrintList :: [Expr] -> IMonad ()
+execPrintList l = forM_ l execPrint
 
 execPrint :: Expr -> IMonad ()
 execPrint expr = do
@@ -129,7 +129,7 @@ execPrint expr = do
     EFloat f -> lift $ putStr $ Numeric.showFFloat (Just 4) f ""
     ETrue -> lift $ putStr $ show True
     EFalse -> lift $ putStr $ show False
-    EList t l -> execPrintList t l
+    EList _ l -> execPrintList l
     _ -> fail "print :<"
 
 execAssert :: Expr -> IMonad ()
@@ -151,7 +151,7 @@ defaultValue t = case t of
   Str -> EString ""
   Bool -> EFalse
   Float -> EFloat 0.0
-  ListT t -> EList t []
+  ListT ty -> EList ty []
   FnType types ->
     let output = last types
         args = dummyLambdaArgs $ take (length types - 1) types
@@ -175,7 +175,7 @@ assign ident expr = do
 declare :: Ident -> Expr -> IMonad ()
 declare ident e = do
   expr <- eval e
-  (loc, env, state, shadowed) <- get
+  (loc, env, state, _) <- get
   let newShadowed = if Map.member ident env then Map.insert ident (env ! ident) env else env
   put (loc + 1, Map.insert ident loc env, Map.insert loc expr state, newShadowed)
 
