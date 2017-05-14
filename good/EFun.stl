@@ -1,5 +1,0 @@
-void main() {
-    fn<int -> int> q = int(int y) {
-        return y;
-    };
-}

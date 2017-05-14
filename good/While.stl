@@ -1,6 +1,6 @@
 void main() {
     int x = 42;
-    while (x > 0) {
+    while x > 0 {
         print(x);
         print(" ");
         x--;
