@@ -113,7 +113,7 @@ variableUndeclared ident = typecheck $ "variable " ++ identString ident
 noInit :: Ident -> Bool -> IO ()
 noInit ident isConst =
   typecheck $ "declaring " ++
-    if isConst then "constant" else "variable with auto type" ++
+    (if isConst then "constant" else "variable with auto type") ++
     " " ++ identString ident ++ " without init"
 
 changingConst :: Ident -> IO ()
