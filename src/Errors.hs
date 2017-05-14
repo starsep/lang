@@ -4,7 +4,8 @@ module Errors
    variableUndeclared, noInit, changingConst, diffTypesBinOp,
    sameArgNames, nonNumeric, nonBoolean, functionUndeclared, notLambda,
    numberOfArgs, typesOfArgs, nonIterable, nonComparable, nonPrintable,
-   listDiffJoin, nonListType, assert, alreadyDecl, divZero, notReturning) where
+   listDiffJoin, nonListType, assert, alreadyDecl, divZero, notReturning,
+   funNoInit) where
 
 import AbsStarsepLang
 import PrintStarsepLang
@@ -189,3 +190,7 @@ divZero = do
 notReturning :: Ident -> IO ()
 notReturning i =
   typecheck $ "function " ++ identString i ++ " may not return value"
+
+funNoInit :: Ident -> Type -> IO ()
+funNoInit i t = typecheck $ "declaring function var " ++ identString i ++
+  " without init" ++ typeOfString t
