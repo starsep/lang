@@ -20,9 +20,6 @@ type IReturn = (Bool, Expr)
 type IState = (Loc, IIdentState, IVarState, IShadowed, IReturn)
 type IMonad = RWST IEnv () IState IO
 
-failure :: Show a => a -> IMonad ()
-failure x = fail $ "Undefined case: " ++ show x
-
 initState :: IState
 initState = (0, Map.empty, Map.empty, Map.empty, (False, EFalse))
 
@@ -310,9 +307,6 @@ eval x =
 
 evalLambda :: [Arg] -> Expr -> IMonad Expr
 evalLambda args expr = return $ Lambda args expr
-
-transFunExec :: FunExec -> IMonad ()
-transFunExec x@(FunExec ident exprs) = failure x
 
 transIfStmt :: IfStmt -> IMonad Bool
 transIfStmt x = case x of
