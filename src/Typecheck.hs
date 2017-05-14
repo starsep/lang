@@ -169,7 +169,7 @@ checkArgs ident args t = do
       expected = length t - 1
   when (nArgs /= expected) $ lift $ Errors.numberOfArgs ident nArgs expected
   argsTypes <- mapM typeOf args
-  let types = take expected t
+  let types = init t
   when (argsTypes /= types) $ lift $ Errors.typesOfArgs ident argsTypes types
   return $ last t
 
@@ -380,9 +380,33 @@ addFunctionArgToState state (Arg t arg) = do
   return $ Map.insert arg (False, t) state
 
 typecheckFunction :: FnDef -> TypedFnDefs -> IO ()
-typecheckFunction (FnDef outType _ args body) typed = do
+typecheckFunction (FnDef outType i args body) typed = do
   funState <- foldM addFunctionArgToState Map.empty args
   void $ runRWST (typecheckBlock body) (typed, outType) (funState, [])
+  when ((outType /= Void) && not (isReturning (BStmt body))) $
+    Errors.notReturning i
+
+isReturning :: Stmt -> Bool
+isReturning stmt = case stmt of
+  BStmt (Block s) -> any isReturning s
+  OperStmt oper -> isReturningOper oper
+  For oper _ _ _ -> isReturningOper oper
+  ElseStmt elseStmt -> isReturningElseStmt elseStmt
+  _ -> False
+
+isReturningOper :: Oper -> Bool
+isReturningOper oper = case oper of
+  Ret _ -> True
+  _ -> False
+
+isReturningIfStmt :: IfStmt -> Bool
+isReturningIfStmt ifStmt = case ifStmt of
+  IfStmt _ b -> isReturning $ BStmt b
+  IfElifStmt ifStmt _ b -> isReturning (BStmt b) && isReturningIfStmt ifStmt
+
+isReturningElseStmt :: IfElseStmt -> Bool
+isReturningElseStmt (IfElseStmt ifStmt b) =
+  isReturningIfStmt ifStmt && isReturning (BStmt b)
 
 typecheck :: Program -> IO ()
 typecheck (Program fns) = do

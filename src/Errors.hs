@@ -4,7 +4,7 @@ module Errors
    variableUndeclared, noInit, changingConst, diffTypesBinOp,
    sameArgNames, nonNumeric, nonBoolean, functionUndeclared, notLambda,
    numberOfArgs, typesOfArgs, nonIterable, nonComparable, nonPrintable,
-   listDiffJoin, nonListType, assert, alreadyDecl, divZero) where
+   listDiffJoin, nonListType, assert, alreadyDecl, divZero, notReturning) where
 
 import AbsStarsepLang
 import PrintStarsepLang
@@ -187,3 +187,7 @@ divZero :: IO Integer
 divZero = do
   runtime $ "division by " ++ exprString (EInt 0)
   return 0
+
+notReturning :: Ident -> IO ()
+notReturning i =
+  typecheck $ "function " ++ identString i ++ " may not return value"
