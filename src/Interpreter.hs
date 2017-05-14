@@ -54,9 +54,15 @@ execFun (FnDef _ _ args block) es = do
   put state
   return (q, eret)
 
+
+haveReturned :: IMonad Bool
+haveReturned = do
+  (r, _) <- getReturn
+  return r
+
 transStmtWrapper :: Stmt -> IMonad ()
 transStmtWrapper stmt = do
-  (r, _) <- getReturn
+  r <- haveReturned
   unless r $ transStmt stmt
 
 transBlock :: Block -> IMonad ()
@@ -121,6 +127,7 @@ listSplit expr = do
     return (Nothing, [], Void)
   else
     return (Just $ head l, tail l, t)
+
 transStmt :: Stmt -> IMonad ()
 transStmt x = case x of
   BStmt block -> transBlock block
@@ -129,7 +136,8 @@ transStmt x = case x of
     c <- evalCond expr
     when c $ do
       transBlock block
-      transStmt x
+      r <- haveReturned
+      unless r $ transStmt x
   For oper1 expr oper2 (Block s) -> do
     let body = Block $ s ++ [OperStmt oper2]
     transBlock $ Block [OperStmt oper1, While expr body]
@@ -137,7 +145,8 @@ transStmt x = case x of
     (h, ta, t) <- listSplit expr
     when (isJust h) $ do
       transBlock $ Block (OperStmt (Auto [Init ident (fromJust h)]) : stms)
-      transStmt $ Foreach ident (EList t ta) b
+      r <- haveReturned
+      unless r $ transStmt $ Foreach ident (EList t ta) b
   Loop block -> transStmt $ While ETrue block
   CondIf ifstmt -> void $ transIfStmt ifstmt
   ElseStmt ifelsestmt -> transIfElseStmt ifelsestmt
@@ -173,7 +182,6 @@ defaultValue t = case t of
   ListT ty -> EList ty []
   Void -> EFalse
   FnType _ -> error "no default value for function, error in typechecker"
-
 
 getLoc :: Ident -> IMonad Loc
 getLoc ident = do
@@ -214,8 +222,6 @@ transAssOp x ident expr =
     MulAss -> EMul varExp Times expr
     DivAss -> EMul varExp Div expr
     ModAss -> EMul varExp Mod expr
-
-
 
 getFunVar :: Ident -> IMonad FnDef
 getFunVar ident = do
@@ -371,16 +377,19 @@ transAddOp :: Num a => AddOp -> (a -> a -> a)
 transAddOp x = case x of
   Plus -> (+)
   Minus -> (-)
+
 transMulOpI :: Integral a => Num a => MulOp -> (a -> a -> a)
 transMulOpI x = case x of
   Times -> (*)
   Div -> div
   Mod -> mod
+
 transMulOpF :: Fractional a => Num a => MulOp -> (a -> a -> a)
 transMulOpF x = case x of
   Times -> (*)
   Div -> (/)
   Mod -> (/)
+
 transRelOp :: Ord a => RelOp -> (a -> a -> Bool)
 transRelOp x = case x of
   LTH -> (<)

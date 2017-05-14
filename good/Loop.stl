@@ -1,7 +1,7 @@
 void main() {
     // loop is equivalent of "while true"
-    /* loop {
+    loop {
         print("42\n");
         return;
-    } */
+    }
 }
