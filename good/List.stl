@@ -3,4 +3,9 @@ void main() {
     let y = x ++ x;
     let a = int[1, 2, 3];
     let b = 4 $ a;
+    list<int> emptyIntList = int[];
+    list<int> append = 5 $ emptyIntList;
+    list<int> join = append ++ append;
+    list<char> stringList = "abc";
+    list<int> listConstructor = int[1, 2, 3, 42 + 5];
 }
