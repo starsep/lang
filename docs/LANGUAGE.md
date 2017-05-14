@@ -97,7 +97,7 @@ The `main` function is executed.
 - foreach
 
 ``` rust
-  for varName in iterable {
+  for varName in someList {
     // instructions
   }
 ```
