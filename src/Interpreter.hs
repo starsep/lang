@@ -23,9 +23,6 @@ type IMonad = RWST IEnv () IState IO
 failure :: Show a => a -> IMonad ()
 failure x = fail $ "Undefined case: " ++ show x
 
-isMain :: FnDef -> Bool
-isMain (FnDef _ (Ident name) _ _) = name == "main"
-
 initState :: IState
 initState = (0, Map.empty, Map.empty, Map.empty, (False, EFalse))
 
@@ -37,11 +34,12 @@ initEnv = foldr addFnToEnv Map.empty
 
 interpret :: Program -> IO ()
 interpret (Program fns) = do
-  let main = head $ filter isMain fns
-  void $ runRWST (transFnDef main) (initEnv fns) initState
+  let env = initEnv fns
+      main = env ! Ident "main"
+  void $ runRWST (transFnDef main []) (initEnv fns) initState
 
-transFnDef :: FnDef -> IMonad ()
-transFnDef (FnDef type_ ident args block) =
+transFnDef :: FnDef -> [Expr] -> IMonad ()
+transFnDef (FnDef type_ ident args block) es =
   -- TODO: set args values
   transBlock block
 
@@ -211,6 +209,11 @@ transAssOp x ident expr =
     DivAss -> EMul varExp Div expr
     ModAss -> EMul varExp Mod expr
 
+getFun :: Ident -> IMonad FnDef
+getFun ident = do
+  env <- ask
+  return $ env ! ident
+
 transOper :: Oper -> IMonad ()
 transOper x = case x of
   Decl type_ items -> forM_ items $ transDecl type_
@@ -223,7 +226,9 @@ transOper x = case x of
   Decr ident -> transOper $ Ass ident MinusAss $ EInt 1
   Ret expr -> putReturn (True, expr)
   VRet -> transOper $ Ret EFalse
-  FnExec funexec -> failure x
+  FnExec (FunExec ident args) -> do
+    f <- getFun ident
+    transFnDef f args
   Print expr -> execPrint expr
   Assert expr -> execAssert expr
 

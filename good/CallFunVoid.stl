@@ -1,0 +1,17 @@
+void abc() {
+    print("Calling abc!\n");
+}
+
+void bar() {
+    print("Calling bar!\n");
+    abc();
+}
+
+void foo() {
+    print("Calling foo!\n");
+    bar();
+}
+
+void main() {
+    foo();
+}
