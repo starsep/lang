@@ -1,0 +1,11 @@
+int x(int a, int b, int c) {
+    return a + b + c;
+}
+
+int y(int a, int b, int c) {
+    return x(a, b, c);
+}
+
+void main() { 
+    assert(y(1, 2, 39) == 42);
+}
