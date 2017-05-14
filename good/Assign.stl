@@ -7,4 +7,20 @@ void main() {
     assert(s == "abc");
     float p = 3.14;
     assert(p == 3.14);
+    x += 10;
+    assert(x == 52);
+    x -= 14;
+    assert(x == 38);
+    x *= 2;
+    assert(x == 76);
+    x /= 4;
+    assert(x == 19);
+    x %= 5;
+    assert(x == 4);
+    x = 21;
+    assert(x == 21);
+    s = s ++ "def";
+    assert(s == "abcdef");
+    s = 'x' $ s;
+    assert(s == "xabcdef");
 }
