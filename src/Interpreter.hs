@@ -9,6 +9,7 @@ import qualified Data.Map as Map
 import Data.Maybe
 import qualified Errors
 import Numeric
+import PrintStarsepLang (printTree)
 
 type Loc = Int
 type IEnv = Map.Map Ident Loc
@@ -131,6 +132,12 @@ execAssert expr = do
   b <- eval expr
   when (b /= ETrue) $ lift $ Errors.assert expr
 
+dummyArg :: Type -> (Int, [Arg]) -> (Int, [Arg])
+dummyArg t (i, args) = (i + 1, Arg t (Ident name) : args) where
+  name = "dummyArg" ++ show i ++ printTree t
+
+dummyLambdaArgs :: [Type] -> [Arg]
+dummyLambdaArgs types = let (_, res) = foldr dummyArg (0, []) types in res
 
 defaultValue :: Type -> Expr
 defaultValue t = case t of
@@ -140,6 +147,13 @@ defaultValue t = case t of
   Bool -> EFalse
   Float -> EFloat 0.0
   ListT t -> EList t []
+  FnType types ->
+    let output = last types
+        args = dummyLambdaArgs $ take (length types - 1) types
+        expr = defaultValue output in
+    Lambda args expr
+  Void -> EFalse
+
 
 getLoc :: Ident -> IMonad Loc
 getLoc ident = do
