@@ -202,7 +202,6 @@ toEBool q = if q then ETrue else EFalse
 eval :: Expr -> IMonad Expr
 eval x =
   case x of
-    EFun output args block -> return x
     EList type_ exprs -> return x
     EVar ident -> do
       state <- getState
@@ -251,11 +250,11 @@ eval x =
     EAnd expr1 expr2 -> do
       b1 <- eval expr1
       b2 <- eval expr2
-      return $ if b1 == ETrue && b2 == ETrue then ETrue else EFalse
+      return $ toEBool $ b1 == ETrue && b2 == ETrue
     EOr expr1 expr2 -> do
       b1 <- eval expr1
       b2 <- eval expr2
-      return $ if b1 == ETrue || b2 == ETrue then ETrue else EFalse
+      return $ toEBool $ b1 == ETrue || b2 == ETrue
     ETernary expr1 expr2 expr3 -> do
       b <- evalCond expr1
       if b then
@@ -287,6 +286,7 @@ transIfElseStmt (IfElseStmt ifstmt block) = do
 
 divZeroHandler :: ArithException -> IO Integer
 divZeroHandler DivideByZero = Errors.divZero
+divZeroHandler _ = return 0
 
 tryIntOp :: Integer -> Integer -> (Integer -> Integer -> Integer) -> IO Integer
 tryIntOp i1 i2 fni = evaluate $ i1 `fni` i2
@@ -304,9 +304,6 @@ transMathExpr expr1 expr2 fni fnf = do
 floatExpr :: Expr -> Double
 floatExpr (EFloat f) = f
 
-intExpr :: Expr -> Integer
-intExpr (EInt i) = i
-
 transAddOp :: Num a => AddOp -> (a -> a -> a)
 transAddOp x = case x of
   Plus -> (+)
@@ -320,6 +317,7 @@ transMulOpF :: Fractional a => Num a => MulOp -> (a -> a -> a)
 transMulOpF x = case x of
   Times -> (*)
   Div -> (/)
+  Mod -> (/)
 transRelOp :: Ord a => RelOp -> (a -> a -> Bool)
 transRelOp x = case x of
   LTH -> (<)

@@ -5,7 +5,6 @@ import Control.Monad
 import Control.Monad.RWS (RWST, ask, get, put, lift, runRWST)
 import qualified Data.Map as Map
 import Data.Map ((!))
-import Data.Maybe
 import qualified Errors
 import PrintStarsepLang (printTree)
 
@@ -40,7 +39,6 @@ addDecl ident = do
 typeOf :: Expr -> TCMonad Type
 typeOf q =
   case q of
-    EFun output args block -> return $ fnHeaderToFnType output args 
     EFunExec (FunExec ident exprs) -> outputType ident exprs
     EList t exprs -> do
       forM_ exprs (`assertType` t)
