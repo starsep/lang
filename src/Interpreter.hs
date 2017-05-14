@@ -3,8 +3,7 @@ module Interpreter (interpret) where
 import AbsStarsepLang
 import Control.Exception.Base
 import Control.Monad
-import Control.Monad.State (StateT, get, put, lift, runStateT)
-import Control.Monad.Reader (ReaderT)
+import Control.Monad.RWS (RWST, get, put, lift, runRWST)
 import Data.Map (Map, (!))
 import qualified Data.Map as Map
 import Data.Maybe
@@ -13,12 +12,13 @@ import Numeric
 import PrintStarsepLang (printTree)
 
 type Loc = Int
+type IEnv = Map Ident FnDef
 type IIdentState = Map Ident Loc
 type IVarState = Map Loc Expr
 type IShadowed = Map Ident Loc
 type IReturn = (Bool, Expr)
 type IState = (Loc, IIdentState, IVarState, IShadowed, IReturn)
-type IMonad = StateT IState IO
+type IMonad = RWST IEnv () IState IO
 
 failure :: Show a => a -> IMonad ()
 failure x = fail $ "Undefined case: " ++ show x
@@ -26,20 +26,19 @@ failure x = fail $ "Undefined case: " ++ show x
 isMain :: FnDef -> Bool
 isMain (FnDef _ (Ident name) _ _) = name == "main"
 
-addFnToState :: FnDef -> IState -> IState
-addFnToState (FnDef _ ident args _) (loc, env, state, s, r) =
-  let newEnv = env --Map.insert ident loc
-      newState = state in --Map.insert loc
-  (loc + 1, newEnv, newState, s, r)
+initState :: IState
+initState = (0, Map.empty, Map.empty, Map.empty, (False, EFalse))
 
-initState :: [FnDef] -> IState
-initState =
-  foldr addFnToState (0, Map.empty, Map.empty, Map.empty, (False, EFalse))
+addFnToEnv :: FnDef -> IEnv -> IEnv
+addFnToEnv fn@(FnDef _ ident _ _) = Map.insert ident fn
+
+initEnv :: [FnDef] -> IEnv
+initEnv = foldr addFnToEnv Map.empty
 
 interpret :: Program -> IO ()
 interpret (Program fns) = do
   let main = head $ filter isMain fns
-  void $ runStateT (transFnDef main) (initState fns)
+  void $ runRWST (transFnDef main) (initEnv fns) initState
 
 transFnDef :: FnDef -> IMonad ()
 transFnDef (FnDef type_ ident args block) =
