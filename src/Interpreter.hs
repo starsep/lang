@@ -181,6 +181,7 @@ defaultValue t = case t of
   Float -> EFloat 0.0
   ListT ty -> EList ty []
   Void -> EFalse
+  -- TODO: proper lambda as default value
   FnType _ -> error "no default value for function, error in typechecker"
 
 getLoc :: Ident -> IMonad Loc

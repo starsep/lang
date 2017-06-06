@@ -1,0 +1,18 @@
+void main() {
+    list<int> l1 = int[1, 2, 3];
+    auto l2 = list<int>[l1, l1, l1];
+    auto l3 = list<list<int>>[l2, l2, l2];
+    list<list<list<list<int>>>> l4 = list<list<list<int>>>[l3, l3, l3];
+    int res = 0;
+    for a in l4 {
+        for b in a {
+            for c in b {
+                for d in c {
+                    res += d;
+                }
+            }
+        }
+    }
+    assert(res == 6 * 3 * 3 * 3);
+    print(res);
+}

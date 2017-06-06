@@ -1,0 +1,13 @@
+void foo(int x, int y) {
+    print(x);
+    print(" ");
+    print(y);
+    print('\n');
+    if x <= 5 {
+        foo(x + 1, x * y + 5);
+    }
+}
+
+void main() {
+    foo(1, 1);
+}

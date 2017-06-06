@@ -1,0 +1,6 @@
+void main() {
+    int x = 42;
+    x = 42 + 536 - 12 * 55 / 3;
+    print(x);
+    assert(x == 358);
+}

@@ -24,3 +24,6 @@ Find out how to build project [here](https://starsep.com/lang/BUILDING.html).
 
 # Source code
 Project repository is at [https://github.com/starsep/lang](https://github.com/starsep/lang).
+
+# Features
+Are [here](https://starsep.com/lang/FEATURES.html).

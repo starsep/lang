@@ -237,9 +237,7 @@ typecheckDecl item t1 = do
   let t = if t1 == Str then ListT Char else t1
   let ident = itemIdent item
   case item of
-    NoInit _ -> case t of
-       FnType _ -> lift $ Errors.funNoInit ident t
-       _ -> return ()
+    NoInit _ -> return ()
     Init _ expr -> assertType expr t
   state <- getState
   addDecl ident

@@ -2,7 +2,7 @@ void foo(int x) {
     print("Calling foo with x = ");
     print(x);
     print("\n");
-    if (x > 0) {
+    if x > 0 {
         foo(x - 1);
     }
 }

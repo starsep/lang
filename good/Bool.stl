@@ -1,0 +1,9 @@
+void main() {
+    bool x = false;
+    x = 32 / 6 == 5;
+    if x {
+        print("32 / 6 == 5\n");
+    } else {
+        print("32 / 6 != 5\n");
+    }
+}

@@ -19,6 +19,11 @@ void main() {
     assert(x == 4);
     x = 21;
     assert(x == 21);
+    x++;
+    assert(x == 22);
+    x--;
+    x--;
+    assert(x == 20);
     s = s ++ "def";
     assert(s == "abcdef");
     s = 'x' $ s;

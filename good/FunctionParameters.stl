@@ -1,0 +1,18 @@
+int math(int a, int b, fn<int -> int -> int> f) {
+    return f(a, b);
+}
+
+int add(int a, int b) { return a + b; }
+int sub(int a, int b) { return a - b; }
+int mul(int a, int b) { return a * b; }
+int div(int a, int b) { return a / b; }
+int mod(int a, int b) { return a % b; }
+
+void main() {
+    int a = 42, b = 12;
+    for f in fn<int -> int -> int>[add, sub, mul, div, mod] {
+        print(math(a, b, f));
+        print('\n');
+    }
+
+}

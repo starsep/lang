@@ -1,0 +1,45 @@
+fn<int -> int -> int> foo(int x) {
+    if x == 0 {
+        return add;
+    } elif x == 1 {
+        return sub;
+    } elif x == 2 {
+        return mul;
+    } elif x == 3 {
+        return div;
+    } else {
+        return mod;
+    }
+}
+
+int add(int a, int b) { return a + b; }
+int sub(int a, int b) { return a - b; }
+int mul(int a, int b) { return a * b; }
+int div(int a, int b) { return a / b; }
+int mod(int a, int b) { return a % b; }
+
+list<int> range(int n) {
+    if n <= 0 {
+        return int[];
+    } else {
+        n--;
+        return n $ range(n);
+    }
+}
+
+list<fn<int -> int -> int>> map(list<int> l, fn<int -> fn<int -> int -> int>> f) {
+    auto res = fn<int -> int -> int>[];
+    for q in l {
+        res = f(q) $ res;
+    }
+    return res;
+}
+
+void main() {
+    int a = 42, b = 12;
+    for f in map(range(7), foo) {
+        print(f(a, b));
+        print('\n');
+    }
+}
+
