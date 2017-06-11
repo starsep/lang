@@ -66,7 +66,9 @@ $(BNFC_SOURCES): grammar/StarsepLang.cf
 	happy -gca ParStarsepLang.y && \
 	alex -g LexStarsepLang.x
 	rm -f $(BUILD)/SkelStarsepLang.hs && \
-	sed -i "/SkelStarsepLang/d" $(BUILD)/TestStarsepLang.hs
+	sed -i "/SkelStarsepLang/d" $(BUILD)/TestStarsepLang.hs && \
+	sed -i 's/module AbsStarsepLang.*/\0\nimport Data.Map (Map)/' build/AbsStarsepLang.hs && \
+	sed -i 's/Lambda.*/\0\n    | ScopedLambda Expr (Map Ident Int)/' build/AbsStarsepLang.hs
 
 interpreter: $(BNFC_SOURCES) $(LINKED_SOURCES)
 	cd $(BUILD) && \

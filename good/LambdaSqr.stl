@@ -1,0 +1,4 @@
+void main() {
+    let sqr = @(int x) -> int { return x * x; };
+    print(sqr(42));
+}

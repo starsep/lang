@@ -229,6 +229,8 @@ getFunVar ident = do
   f <- getValue ident
   case f of
     EVar fIdent -> getFun fIdent
+    Lambda {} -> do
+      error $ show f
     _ -> error $ "no function var " ++ show ident ++ ", error in typechecker"
 
 getFun :: Ident -> IMonad FnDef
@@ -337,6 +339,7 @@ eval x =
       f <- getFun ident
       (_, e) <- execFun f args
       return e
+    Lambda {} -> return x
 
 transIfStmt :: IfStmt -> IMonad Bool
 transIfStmt x = case x of

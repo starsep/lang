@@ -80,6 +80,8 @@ typeOf q =
       t <- typeOf e1
       assertType e2 t
       return t
+    Lambda args outType b -> do
+      return $ fnHeaderToFnType outType args
 
 listType :: Expr -> TCMonad Type
 listType expr = do

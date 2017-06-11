@@ -1,0 +1,4 @@
+void main() {
+    auto a = @(int x, int y) -> int { return 42 * x + y; };
+    print(a(42, 12));
+}

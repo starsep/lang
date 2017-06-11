@@ -31,7 +31,7 @@
 
 - shadowing with static binding - **warn/Shadow.stl**
 - static typing - most of **bad** examples
-- division by zero runtime errors - **bad/{DivZero.stl, ModZero}**
+- division by zero runtime errors - **bad/{DivZero.stl, ModZero.stl}**
 - functions returning values - **good/FacIter.stl**
 - lists - **good/{List.stl, Listception.stl}**
 - functions parameters - **good/{FunctionParameters.stl, PassFunction.stl}**

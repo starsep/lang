@@ -1,0 +1,4 @@
+void main() {
+    auto x = @() -> int { return 42; };
+    print(x());
+}

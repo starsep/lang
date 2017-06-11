@@ -60,6 +60,10 @@ FnType.       Type ::= "fn" "<" [Type] ">" ;
 ListT.        Type ::= "list" "<" Type ">" ;
 separator nonempty Type "->" ;
 
+-- Lambdas -------------------------------------------------
+
+Lambda.       Expr ::= "@" "(" [Arg] ")" "->" Type Block ;
+
 -- Expressions ---------------------------------------------
 
 EFunExec.     Expr8 ::= FunExec ;

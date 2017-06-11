@@ -1,0 +1,3 @@
+void main() {
+    let a = @() -> int { return 42; };
+}
